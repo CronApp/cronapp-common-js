@@ -510,6 +510,12 @@ angular.module('datasourcejs', [])
       this.handleError = function(data) {
         console.log(data);
 
+        if (data instanceof XMLDocument) {
+          var errorMsg = data.getElementsByTagName("message")[0].textContent;
+          data = errorMsg;
+          console.log(data);
+        }
+
         var error = "";
 
         if (data) {
@@ -1234,6 +1240,11 @@ angular.module('datasourcejs', [])
           xhr.setRequestHeader('X-AUTH-TOKEN', _u.token);
 
           xhr.onreadystatechange = function(){
+            if(xhr.readyState === 4 && xhr.status === 500){
+              var parser = new DOMParser();
+              var error = parser.parseFromString(xhr.response,"text/xml");
+              this.handleError(error);
+            }
             if(xhr.readyState === 4 && xhr.status === 201){
               //Having to make another request to get the base64 value
               service.call(url + '/' +  of.field, 'GET', {}, false).$promise.error(function(errorMsg) {
@@ -1248,7 +1259,7 @@ angular.module('datasourcejs', [])
                 resolve();
               });
             }
-          };
+          }.bind(this);
 
           xhr.send(file);
 
@@ -3469,9 +3480,9 @@ angular.module('datasourcejs', [])
             filter += ";";
             filter += paramFilter;
           }
-        } 
+        }
       }
-      
+
       var paramOrder = null;
 
       if (this.isOData() && props.params.$orderby) {
