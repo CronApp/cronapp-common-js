@@ -510,6 +510,12 @@ angular.module('datasourcejs', [])
       this.handleError = function(data) {
         console.log(data);
 
+        if (data instanceof XMLDocument) {
+          var errorMsg = data.getElementsByTagName("message")[0].textContent;
+          data = errorMsg;
+          console.log(data);
+        }
+
         var error = "";
 
         if (data) {
@@ -962,8 +968,8 @@ angular.module('datasourcejs', [])
 
                 if (odataFiles && odataFiles.length > 0) {
                   _self.sendODataFiles(odataFiles, newObj, function (result) {
-                    currentObj[result.field] = result.data[result.field];
-                  }, function() {
+                    this.copy(result.data, currentObj);
+                  }.bind(this), function() {
                     resolve();
                   });
                 } else {
@@ -998,8 +1004,8 @@ angular.module('datasourcejs', [])
                 }
                 if (odataFiles && odataFiles.length > 0) {
                   _self.sendODataFiles(odataFiles, newObj, function (result) {
-                    currentObj[result.field] = result.data[result.field];
-                  }, function() {
+                    this.copy(result.data, currentObj);
+                  }.bind(this), function() {
                     resolve();
                   });
                 } else {
@@ -1234,9 +1240,14 @@ angular.module('datasourcejs', [])
           xhr.setRequestHeader('X-AUTH-TOKEN', _u.token);
 
           xhr.onreadystatechange = function(){
+            if(xhr.readyState === 4 && xhr.status === 500){
+              var parser = new DOMParser();
+              var error = parser.parseFromString(xhr.response,"text/xml");
+              this.handleError(error);
+            }
             if(xhr.readyState === 4 && xhr.status === 201){
               //Having to make another request to get the base64 value
-              service.call(url + '/' +  of.field, 'GET', {}, false).$promise.error(function(errorMsg) {
+              service.call(url, 'GET', {}, false).$promise.error(function(errorMsg) {
                 Notification.error('Error send file');
               }).then(function(data, resultBool) {
                 if (callback) {
@@ -1248,7 +1259,7 @@ angular.module('datasourcejs', [])
                 resolve();
               });
             }
-          };
+          }.bind(this);
 
           xhr.send(file);
 
@@ -1344,7 +1355,7 @@ angular.module('datasourcejs', [])
 
             if (odataFiles && odataFiles.length > 0) {
               this.sendODataFiles(odataFiles, obj, function (result) {
-                obj[result.field] = result.data[result.field];
+                this.copy(result.data, obj);
               }.bind(this), function() {
                 proceed()
               }.bind(this));
@@ -1436,7 +1447,7 @@ angular.module('datasourcejs', [])
             } else {
               if (odataFiles && odataFiles.length > 0) {
                 this.sendODataFiles(odataFiles, foundRow, function (result) {
-                  foundRow[result.field] = result.data[result.field];
+                  this.copy(result.data, foundRow);
                 }.bind(this), function() {
                   if (this.events.update && hotData) {
                     this.callDataSourceEvents('update', foundRow);
@@ -3469,9 +3480,9 @@ angular.module('datasourcejs', [])
             filter += ";";
             filter += paramFilter;
           }
-        } 
+        }
       }
-      
+
       var paramOrder = null;
 
       if (this.isOData() && props.params.$orderby) {
