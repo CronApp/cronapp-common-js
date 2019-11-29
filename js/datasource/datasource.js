@@ -1888,6 +1888,20 @@ angular.module('datasourcejs', [])
       }
     }
 
+    this.resetFieldsStatus = function() {
+
+        var waitingBecameVisible = setInterval(function() {
+            if ($('input[ng-model*="'+this.name+'."]').is(':visible')) {
+                $('input[ng-model*="'+this.name+'."]:invalid:empty').removeClass('ng-invalid ng-invalid-required');
+                clearInterval(waitingBecameVisible);
+            }
+            else if ($('input[ng-model*="'+this.name+'."].cronMultiSelect')) {
+                clearInterval(waitingBecameVisible);
+            }
+        }, 100);
+
+    };
+
     /**
      * Put the datasource into the inserting state
      */
@@ -1909,6 +1923,9 @@ angular.module('datasourcejs', [])
         if (this.events.creating) {
           this.callDataSourceEvents('creating', this.active);
         }
+
+        this.resetFieldsStatus();
+
       }.bind(this));
     };
 
