@@ -1951,6 +1951,7 @@ angular.module('datasourcejs', [])
       if (this.events.editing) {
         this.callDataSourceEvents('updating', this.active);
       }
+      this.resetFieldsStatus();
     };
 
     this.removeSilent = function(object, onSuccess, onError) {
