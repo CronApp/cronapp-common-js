@@ -2695,26 +2695,34 @@ angular.module('datasourcejs', [])
       }
     }
 
-    this.callDataSourceEvents = function(key, param) {
-      if (this.events) {
-        var event = this.events[key];
-        if (event) {
-          if (Object.prototype.toString.call(event) !== '[object Array]') {
-            event = [event];
-          }
+      this.callDataSourceEvents = function(key, param) {
+        if (this.events) {
+          var event = this.events[key];
+          if (event) {
+            if (Object.prototype.toString.call(event) !== '[object Array]') {
+              event = [event];
+            }
 
-          var args = [];
-          for (var j = 1; j < arguments.length; j++) {
-            args.push(arguments[j]);
-          }
+            var args = [];
+            for (var j = 1; j < arguments.length; j++) {
+              args.push(arguments[j]);
+            }
 
-          for (var i = 0; i < event.length; i++) {
-            event[i].apply(null, args);
-          }
+            var toBeExecutedAlways = [];
+            for (var j = 0; j < event.length; j++)
+              toBeExecutedAlways.push(event[j]);
 
+            for (var i = 0; i < toBeExecutedAlways.length; i++) {
+              try {
+                toBeExecutedAlways[i].apply(null, args);
+              }
+              catch (err) {
+                console.log('Error', 'Event no more exist in datasource');
+              }
+            }
+          }
         }
       }
-    }
 
     this.storeInMemory = function(id) {
       if (!this.memoryData) {
