@@ -1420,7 +1420,6 @@ angular.module('datasourcejs', [])
                 }
               }
               this.notifyPendingChanges(this.hasMemoryData);
-              this.handleAfterCallBack(this.onAfterUpdate);
 
               if (this.events.update && hotData) {
                 this.callDataSourceEvents('update', this.active);
@@ -1434,6 +1433,11 @@ angular.module('datasourcejs', [])
           }.bind(this));
 
           var back = function() {
+
+            if (foundRow) {
+              this.handleAfterCallBack(this.onAfterUpdate);
+            }
+
             this.onBackNomalState();
 
             if (onSuccess) {
