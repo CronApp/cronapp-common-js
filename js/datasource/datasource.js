@@ -3619,6 +3619,11 @@ angular.module('datasourcejs', [])
         }
       }.bind(this)).error(function(data, status, headers, config) {
         httpError(data, status, headers, config);
+        //CRONAPP-1189 - Resolução temporária para quando tiver algum problema na pesquisa
+        //CRONAPP-1250 - Jira para implementar a solução definitiva.
+        this.lastFilter = filter;
+        sucessHandler([], null, true);
+        //CRONAPP-1189 - final da implementação
       }.bind(this));
 
 
