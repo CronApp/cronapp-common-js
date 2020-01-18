@@ -1119,7 +1119,7 @@ angular.module('datasourcejs', [])
 
     this.validateFields = function(expression, message) {
       var selection = $(expression);
-      if (selection.length > 0) {
+      if (selection.length > 0 && selection.get(0).validationMessage !== "") {
         var forId = $('label[for="'+selection.get(0).id+'"]');
         var label = selection.get(0).id
         if (forId.length > 0) {
@@ -1157,6 +1157,8 @@ angular.module('datasourcejs', [])
         var valid = this.validateFields('[required][ng-model*="' + this.name + '."].ng-invalid-required', this.translate.instant("FieldIsRequired"));
         valid = valid && this.validateFields('[required][ng-model*="' + this.name + '."].ng-empty', this.translate.instant("FieldIsRequired"));
         valid = valid && this.validateFields('[ng-model*="' + this.name + '."].ng-invalid', this.translate.instant("FieldIsInvalid"));
+        valid = valid && this.validateFields('[ng-model*="' + this.name + '."].ng-invalid-required', this.translate.instant("FieldIsInvalid"));
+        valid = valid && this.validateFields('[ng-model*="' + this.name + '."].cronSelect', this.translate.instant("FieldIsInvalid"));
 
         return !valid;
       } else {
