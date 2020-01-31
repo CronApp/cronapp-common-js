@@ -3,6 +3,277 @@ var ISO_PATTERN  = new RegExp("(\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\
 var TIME_PATTERN  = new RegExp("PT(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)(?:\\.(\\d+)?)?S)?");
 var DEP_PATTERN  = new RegExp("\\{\\{(.*?)\\|raw\\}\\}");
 
+var initDatasource = function(scope, element, attrs) {
+  var instanceId =  parseInt(Math.random() * 9999);
+  //Add in header the path from the request was executed
+  var originPath = "origin-path:" + $location.path();
+  if (attrs.headers === undefined || attrs.headers === null) {
+    attrs.headers = originPath;
+  } else {
+    attrs.headers = attrs.headers.concat(";", originPath);
+  }
+
+  var props = {
+    name: attrs.name,
+    entity: attrs.entity,
+    apiVersion: attrs.apiVersion,
+    enabled: (attrs.hasOwnProperty('enabled')) ? (attrs.enabled === "true") : true,
+    keys: attrs.keys,
+    endpoint: attrs.endpoint,
+    lazy: attrs.lazy === "true",
+    append: !attrs.hasOwnProperty('append') || attrs.append === "true",
+    prepend: (attrs.hasOwnProperty('prepend') && attrs.prepend === "") || attrs.prepend === "true",
+    watch: attrs.watch,
+    rowsPerPage: attrs.rowsPerPage,
+    offset: attrs.offset,
+    filterURL: attrs.filter,
+    watchFilter: attrs.watchFilter,
+    deleteMessage: attrs.deleteMessage || attrs.deleteMessage === "" ? attrs.deleteMessage : $translate.instant('General.RemoveData'),
+    headers: attrs.headers,
+    autoPost: attrs.autoPost === "true",
+    autoRefresh: (attrs.autoRefresh !== undefined && attrs.autoRefresh !== null) ? attrs.autoRefresh : 0,
+    onError: attrs.onError,
+    onAfterFill: attrs.onAfterFill,
+    onBeforeCreate: attrs.onBeforeCreate,
+    onAfterCreate: attrs.onAfterCreate,
+    onBeforeUpdate: attrs.onBeforeUpdate,
+    onAfterUpdate: attrs.onAfterUpdate,
+    onBeforeDelete: attrs.onBeforeDelete,
+    onAfterDelete: attrs.onAfterDelete,
+    onGet: attrs.onGet,
+    onPost: attrs.onPost,
+    onPut: attrs.onPut,
+    onDelete: attrs.onDelete,
+    defaultNotSpecifiedErrorMessage: $translate.instant('General.ErrorNotSpecified'),
+    dependentBy: attrs.dependentBy,
+    dependentLazyPost: attrs.dependentLazyPost,
+    batchPost: attrs.batchpost === "true",
+    dependentLazyPostField: attrs.dependentLazyPostField,
+    parameters: attrs.parameters,
+    parametersNullStrategy: attrs.parametersNullStrategy?attrs.parametersNullStrategy:"default",
+    parametersExpression: $(element).attr('parameters'),
+    conditionExpression: $(element).attr('condition'),
+    condition: attrs.condition,
+    orderBy: attrs.orderBy,
+    schema: attrs.schema ? JSON.parse(attrs.schema) : undefined,
+    checkRequired: !attrs.hasOwnProperty('checkrequired') || attrs.checkrequired === "" || attrs.checkrequired === "true"
+  }
+
+  var firstLoad = {
+    filter: true,
+    entity: true,
+    enabled: true,
+    parameters: true
+  }
+
+  var urlParameters;
+  if (scope.params) {
+    for (var paramKey in scope.params) {
+      if (scope.params.hasOwnProperty(paramKey)) {
+        var value = scope.params[paramKey];
+        if (paramKey.startsWith("$"+attrs.name+".")) {
+          var key = paramKey.split(".");
+          if (key.length == 2) {
+            if (key[1] == "$filterMode") {
+              props.startMode = value;
+            } else {
+              if (urlParameters) {
+                urlParameters += ";";
+              } else {
+                urlParameters = "";
+              }
+              if (!isNaN(value)) {
+                urlParameters += key[1]+"="+value;
+              } else {
+                urlParameters += key[1]+"='"+value+"'";
+              }
+
+
+            }
+          }
+
+        }
+      }
+    }
+
+    if (urlParameters) {
+      props.parameters = urlParameters;
+      props.parametersExpression = urlParameters;
+    }
+  }
+
+  var instanceId =  parseInt(Math.random() * 9999);
+  var datasource = DatasetManager.initDataset(props, scope, $compile, $parse, $interpolate, instanceId, $translate);
+  var timeoutPromise;
+
+  attrs.$observe('filter', function(value) {
+    if (datasource.isPostingBatchData()) {
+      return;
+    }
+
+    if (!firstLoad.filter) {
+      // Stop the pending timeout
+      $timeout.cancel(timeoutPromise);
+
+      // Start a timeout
+      timeoutPromise = $timeout(function() {
+        if (datasource.events.overRideRefresh) {
+          datasource.callDataSourceEvents('overRideRefresh', 'filter', value);
+        } else {
+          datasource.filter(value, function (data) {
+            if (datasource.events.refresh) {
+              datasource.callDataSourceEvents('refresh', data, 'filter');
+            }
+          });
+        }
+        datasource.lastFilterParsed = value;
+      }, 100);
+    } else {
+      $timeout(function() {
+        firstLoad.filter = false;
+      }, 0);
+    }
+  });
+
+  if (!urlParameters) {
+    attrs.$observe('parameters', function(value) {
+      if (datasource.isPostingBatchData()) {
+        return;
+      }
+
+      if (datasource.parameters != value) {
+        datasource.parameters = value;
+
+        $timeout.cancel(timeoutPromise);
+        timeoutPromise =$timeout(function() {
+          datasource.callDataSourceEvents('changeDependency', 'parameters', datasource.parameters);
+
+          if (datasource.events.overRideRefresh) {
+            datasource.callDataSourceEvents('overRideRefresh', 'parameters', datasource.parameters);
+          } else {
+            datasource.fetch({
+              params: {}
+            }, {
+              success: function (data) {
+                if (datasource.events.refresh) {
+                  datasource.callDataSourceEvents('refresh', data, 'parameters');
+                }
+              }
+            });
+          }
+        }, 0);
+
+      }
+    });
+  }
+
+  attrs.$observe('condition', function(value) {
+    if (datasource.isPostingBatchData()) {
+      return;
+    }
+
+    if (datasource.condition != value) {
+      datasource.condition = value;
+
+      if (datasource.loadDataStrategy === "button") {
+        return;
+      }
+
+      $timeout.cancel(timeoutPromise);
+      timeoutPromise =$timeout(function() {
+        datasource.callDataSourceEvents('changeDependency', 'condition', datasource.condition);
+
+        if (datasource.events.overRideRefresh) {
+          datasource.callDataSourceEvents('overRideRefresh', 'condition', datasource.condition);
+        } else {
+          datasource.fetch({
+            params: {}
+          }, {
+            success: function (data) {
+              if (datasource.events.refresh) {
+                datasource.callDataSourceEvents('refresh', data, 'condition');
+              }
+            }
+          });
+        }
+      }, 0);
+
+    }
+  });
+
+  attrs.$observe('enabled', function(value) {
+    var boolValue = (value === "true");
+
+    if (datasource.enabled != boolValue) {
+      datasource.enabled = boolValue;
+
+      if (datasource.enabled) {
+        $timeout.cancel(timeoutPromise);
+        timeoutPromise =$timeout(function () {
+          if (datasource.events.overRideRefresh) {
+            datasource.callDataSourceEvents('overRideRefresh', 'enabled', datasource.parameters);
+          } else {
+            datasource.fetch({
+                params: {}
+              },
+              {
+                success: function (data) {
+                  if (datasource.events.refresh) {
+                    datasource.callDataSourceEvents('refresh', data, 'enabled');
+                  }
+                }
+              }
+            );
+          }
+        }, 200);
+      }
+    }
+  });
+
+  attrs.$observe('entity', function(value) {
+    datasource.entity = value;
+
+    if (window.dataSourceMap && window.dataSourceMap[datasource.entity]) {
+      datasource.entity = window.dataSourceMap[datasource.entity].serviceUrlODATA || window.dataSourceMap[datasource.entity].serviceUrl;
+      if(datasource.entity.charAt(0) === "/"){
+        datasource.entity = datasource.entity.substr(1);
+      }
+    }
+
+    if (!firstLoad.entity) {
+      // Only fetch if it's not the first load
+
+      $timeout.cancel(timeoutPromise);
+
+      timeoutPromise = $timeout(function() {
+        datasource.fetch({
+            params: {}
+          },
+          {
+            success : function (data) {
+              if (datasource.events.refresh) {
+                datasource.callDataSourceEvents('refresh', data, 'entity');
+              }
+            }
+          }
+        );
+      }, 200);
+    } else {
+      $timeout(function() {
+        firstLoad.entity = false;
+      });
+    }
+  });
+  scope.$on('$destroy', function() {
+    if ($rootScope[attrs.name] && $rootScope[attrs.name+".instanceId"] == instanceId) {
+      $rootScope[attrs.name].destroy();
+      delete window[attrs.name];
+      delete $rootScope[attrs.name];
+      delete  $rootScope[attrs.name+".instanceId"];
+    }
+  });
+};
+
 angular.module('datasourcejs', [])
 
 /**
@@ -3987,279 +4258,7 @@ angular.module('datasourcejs', [])
     scope: true,
     template: '',
     link: function(scope, element, attrs) {
-      var instanceId =  parseInt(Math.random() * 9999);
-      var init = function() {
-
-        //Add in header the path from the request was executed
-        var originPath = "origin-path:" + $location.path();
-        if (attrs.headers === undefined || attrs.headers === null) {
-          attrs.headers = originPath;
-        } else {
-          attrs.headers = attrs.headers.concat(";", originPath);
-        }
-
-        var props = {
-          name: attrs.name,
-          entity: attrs.entity,
-          apiVersion: attrs.apiVersion,
-          enabled: (attrs.hasOwnProperty('enabled')) ? (attrs.enabled === "true") : true,
-          keys: attrs.keys,
-          endpoint: attrs.endpoint,
-          lazy: attrs.lazy === "true",
-          append: !attrs.hasOwnProperty('append') || attrs.append === "true",
-          prepend: (attrs.hasOwnProperty('prepend') && attrs.prepend === "") || attrs.prepend === "true",
-          watch: attrs.watch,
-          rowsPerPage: attrs.rowsPerPage,
-          offset: attrs.offset,
-          filterURL: attrs.filter,
-          watchFilter: attrs.watchFilter,
-          deleteMessage: attrs.deleteMessage || attrs.deleteMessage === "" ? attrs.deleteMessage : $translate.instant('General.RemoveData'),
-          headers: attrs.headers,
-          autoPost: attrs.autoPost === "true",
-          autoRefresh: (attrs.autoRefresh !== undefined && attrs.autoRefresh !== null) ? attrs.autoRefresh : 0,
-          onError: attrs.onError,
-          onAfterFill: attrs.onAfterFill,
-          onBeforeCreate: attrs.onBeforeCreate,
-          onAfterCreate: attrs.onAfterCreate,
-          onBeforeUpdate: attrs.onBeforeUpdate,
-          onAfterUpdate: attrs.onAfterUpdate,
-          onBeforeDelete: attrs.onBeforeDelete,
-          onAfterDelete: attrs.onAfterDelete,
-          onGet: attrs.onGet,
-          onPost: attrs.onPost,
-          onPut: attrs.onPut,
-          onDelete: attrs.onDelete,
-          defaultNotSpecifiedErrorMessage: $translate.instant('General.ErrorNotSpecified'),
-          dependentBy: attrs.dependentBy,
-          dependentLazyPost: attrs.dependentLazyPost,
-          batchPost: attrs.batchpost === "true",
-          dependentLazyPostField: attrs.dependentLazyPostField,
-          parameters: attrs.parameters,
-          parametersNullStrategy: attrs.parametersNullStrategy?attrs.parametersNullStrategy:"default",
-          parametersExpression: $(element).attr('parameters'),
-          conditionExpression: $(element).attr('condition'),
-          condition: attrs.condition,
-          orderBy: attrs.orderBy,
-          schema: attrs.schema ? JSON.parse(attrs.schema) : undefined,
-          checkRequired: !attrs.hasOwnProperty('checkrequired') || attrs.checkrequired === "" || attrs.checkrequired === "true"
-        }
-
-        var firstLoad = {
-          filter: true,
-          entity: true,
-          enabled: true,
-          parameters: true
-        }
-
-        var urlParameters;
-        if (scope.params) {
-          for (var paramKey in scope.params) {
-            if (scope.params.hasOwnProperty(paramKey)) {
-              var value = scope.params[paramKey];
-              if (paramKey.startsWith("$"+attrs.name+".")) {
-                var key = paramKey.split(".");
-                if (key.length == 2) {
-                  if (key[1] == "$filterMode") {
-                    props.startMode = value;
-                  } else {
-                    if (urlParameters) {
-                      urlParameters += ";";
-                    } else {
-                      urlParameters = "";
-                    }
-                    if (!isNaN(value)) {
-                      urlParameters += key[1]+"="+value;
-                    } else {
-                      urlParameters += key[1]+"='"+value+"'";
-                    }
-
-
-                  }
-                }
-
-              }
-            }
-          }
-
-          if (urlParameters) {
-            props.parameters = urlParameters;
-            props.parametersExpression = urlParameters;
-          }
-        }
-
-        var instanceId =  parseInt(Math.random() * 9999);
-        var datasource = DatasetManager.initDataset(props, scope, $compile, $parse, $interpolate, instanceId, $translate);
-        var timeoutPromise;
-
-        attrs.$observe('filter', function(value) {
-          if (datasource.isPostingBatchData()) {
-            return;
-          }
-
-          if (!firstLoad.filter) {
-            // Stop the pending timeout
-            $timeout.cancel(timeoutPromise);
-
-            // Start a timeout
-            timeoutPromise = $timeout(function() {
-              if (datasource.events.overRideRefresh) {
-                datasource.callDataSourceEvents('overRideRefresh', 'filter', value);
-              } else {
-                datasource.filter(value, function (data) {
-                  if (datasource.events.refresh) {
-                    datasource.callDataSourceEvents('refresh', data, 'filter');
-                  }
-                });
-              }
-              datasource.lastFilterParsed = value;
-            }, 100);
-          } else {
-            $timeout(function() {
-              firstLoad.filter = false;
-            }, 0);
-          }
-        });
-
-        if (!urlParameters) {
-          attrs.$observe('parameters', function(value) {
-            if (datasource.isPostingBatchData()) {
-              return;
-            }
-
-            if (datasource.parameters != value) {
-              datasource.parameters = value;
-
-              $timeout.cancel(timeoutPromise);
-              timeoutPromise =$timeout(function() {
-                datasource.callDataSourceEvents('changeDependency', 'parameters', datasource.parameters);
-
-                if (datasource.events.overRideRefresh) {
-                  datasource.callDataSourceEvents('overRideRefresh', 'parameters', datasource.parameters);
-                } else {
-                  datasource.fetch({
-                    params: {}
-                  }, {
-                    success: function (data) {
-                      if (datasource.events.refresh) {
-                        datasource.callDataSourceEvents('refresh', data, 'parameters');
-                      }
-                    }
-                  });
-                }
-              }, 0);
-
-            }
-          });
-        }
-
-        attrs.$observe('condition', function(value) {
-          if (datasource.isPostingBatchData()) {
-            return;
-          }
-
-          if (datasource.condition != value) {
-            datasource.condition = value;
-
-            if (datasource.loadDataStrategy === "button") {
-              return;
-            }
-
-            $timeout.cancel(timeoutPromise);
-            timeoutPromise =$timeout(function() {
-              datasource.callDataSourceEvents('changeDependency', 'condition', datasource.condition);
-
-              if (datasource.events.overRideRefresh) {
-                datasource.callDataSourceEvents('overRideRefresh', 'condition', datasource.condition);
-              } else {
-                datasource.fetch({
-                  params: {}
-                }, {
-                  success: function (data) {
-                    if (datasource.events.refresh) {
-                      datasource.callDataSourceEvents('refresh', data, 'condition');
-                    }
-                  }
-                });
-              }
-            }, 0);
-
-          }
-        });
-
-        attrs.$observe('enabled', function(value) {
-          var boolValue = (value === "true");
-
-          if (datasource.enabled != boolValue) {
-            datasource.enabled = boolValue;
-
-            if (datasource.enabled) {
-              $timeout.cancel(timeoutPromise);
-              timeoutPromise =$timeout(function () {
-                if (datasource.events.overRideRefresh) {
-                  datasource.callDataSourceEvents('overRideRefresh', 'enabled', datasource.parameters);
-                } else {
-                  datasource.fetch({
-                        params: {}
-                      },
-                      {
-                        success: function (data) {
-                          if (datasource.events.refresh) {
-                            datasource.callDataSourceEvents('refresh', data, 'enabled');
-                          }
-                        }
-                      }
-                  );
-                }
-              }, 200);
-            }
-          }
-        });
-
-        attrs.$observe('entity', function(value) {
-          datasource.entity = value;
-
-          if (window.dataSourceMap && window.dataSourceMap[datasource.entity]) {
-            datasource.entity = window.dataSourceMap[datasource.entity].serviceUrlODATA || window.dataSourceMap[datasource.entity].serviceUrl;
-            if(datasource.entity.charAt(0) === "/"){
-              datasource.entity = datasource.entity.substr(1);
-            }
-          }
-
-          if (!firstLoad.entity) {
-            // Only fetch if it's not the first load
-
-            $timeout.cancel(timeoutPromise);
-
-            timeoutPromise = $timeout(function() {
-              datasource.fetch({
-                    params: {}
-                  },
-                  {
-                    success : function (data) {
-                      if (datasource.events.refresh) {
-                        datasource.callDataSourceEvents('refresh', data, 'entity');
-                      }
-                    }
-                  }
-              );
-            }, 200);
-          } else {
-            $timeout(function() {
-              firstLoad.entity = false;
-            });
-          }
-        });
-
-      };
-      init();
-      scope.$on('$destroy', function() {
-        if ($rootScope[attrs.name] && $rootScope[attrs.name+".instanceId"] == instanceId) {
-          $rootScope[attrs.name].destroy();
-          delete window[attrs.name];
-          delete $rootScope[attrs.name];
-          delete  $rootScope[attrs.name+".instanceId"];
-        }
-      });
+      initDatasource(scope, element, attrs);
     }
   };
 }])
@@ -4310,4 +4309,18 @@ app.directive('crnRepeat', function(DatasetManager, $compile, $parse, $injector,
       }
     }
   };
-}]);
+}])
+
+/**
+ * Cronapp Datasource Directive
+ */
+.directive('cronappDatasource', ['DatasetManager', '$timeout', '$parse', 'Notification', '$translate', '$location','$rootScope', '$compile', '$interpolate', function(DatasetManager, $timeout, $parse, Notification, $translate, $location, $rootScope, $compile, $interpolate) {
+  return {
+    restrict: 'E',
+    scope: true,
+    template: '',
+    link: function(scope, element, attrs) {
+      initDatasource(scope, element, attrs);
+    }
+  };
+}])
