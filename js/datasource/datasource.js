@@ -816,11 +816,22 @@ angular.module('datasourcejs', [])
 
         this.errorMessage = error;
 
-        if (this.onError && this.onError != '') {
+        if (this.onError && this.onError !== '') {
           if (typeof(this.onError) === 'string') {
             try {
-              var indexFunc = this.onError.indexOf('(') == -1 ? this.onError.length : this.onError.indexOf('(');
-              var func = eval(this.onError.substring(0, indexFunc));
+              var contextVars = {
+                'currentData': this.active,
+                'filter': "",
+                'datasource': this,
+                'selectedIndex': this.cursor,
+                'index': this.cursor,
+                'selectedRow': this.active,
+                'item': this.active,
+                'selectedKeys': this.getKeyValues(this.active, true),
+                'selectedKey': this.getFirstKeyValue(this.active, true),
+                'callback': this.successCallback
+              };
+              var func = this.$scope.$eval(this.onError, contextVars);
               if (typeof(func) === 'function') {
                 this.onError = func;
               }
