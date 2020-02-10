@@ -2075,6 +2075,7 @@ angular.module('datasourcejs', [])
           this.cleanDependentBuffer();
         });
       }
+      this.changeTitleStatus();
     };
 
     this.removeODataFields = function(obj) {
@@ -2188,6 +2189,23 @@ angular.module('datasourcejs', [])
 
     };
 
+    this.changeTitleStatus = function() {
+      if ($('#starter').length && $('#starter').attr('primary-datasource') === this.name) {
+
+        var currentTitle = $rootScope.viewTitleOnly;
+        var systemName =  $rootScope.systemName && $rootScope.systemName.length ? ' - ' + $rootScope.systemName : '';
+
+        if (this.inserting)
+            currentTitle += ' - ' + this.translate.instant('Inserting');
+        else if (this.editing)
+            currentTitle += ' - ' + this.translate.instant('Editing');
+
+        $('h1.title').text(currentTitle);
+        window.document.title = currentTitle + systemName;
+
+      }
+    };
+
     /**
      * Put the datasource into the inserting state
      */
@@ -2211,6 +2229,7 @@ angular.module('datasourcejs', [])
         }
 
         this.resetFieldsStatus();
+        this.changeTitleStatus();
 
       }.bind(this));
     };
@@ -2238,6 +2257,7 @@ angular.module('datasourcejs', [])
         this.callDataSourceEvents('updating', this.active);
       }
       this.resetFieldsStatus();
+      this.changeTitleStatus();
     };
 
     this.removeSilent = function(object, onSuccess, onError) {
