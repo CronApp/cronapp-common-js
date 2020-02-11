@@ -4291,7 +4291,9 @@ angular.module('datasourcejs', [])
     scope: true,
     template: '',
     link: function(scope, element, attrs) {
-      initDatasource(scope, element, attrs, DatasetManager, $timeout, $parse, Notification, $translate, $location, $rootScope, $compile, $interpolate);
+      var cronappDatasource = element.context.outerHTML.split('<datasource').join('<cronapp-datasource').split('datasource>').join('cronapp-datasource>');
+      var e = $compile(cronappDatasource)(scope);
+      element.replaceWith(e);
     }
   };
 }])
