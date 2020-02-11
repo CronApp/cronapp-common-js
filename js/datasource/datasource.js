@@ -2052,6 +2052,7 @@ angular.module('datasourcejs', [])
         this.busy = false;
         this.editing = false;
         this.inserting = false;
+        this.changeTitle();
       }.bind(this))
     };
 
@@ -2075,7 +2076,6 @@ angular.module('datasourcejs', [])
           this.cleanDependentBuffer();
         });
       }
-      this.changeTitle();
     };
 
     this.removeODataFields = function(obj) {
