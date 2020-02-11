@@ -2075,7 +2075,7 @@ angular.module('datasourcejs', [])
           this.cleanDependentBuffer();
         });
       }
-      this.changeTitleStatus();
+      this.changeTitle();
     };
 
     this.removeODataFields = function(obj) {
@@ -2189,21 +2189,22 @@ angular.module('datasourcejs', [])
 
     };
 
-    this.changeTitleStatus = function() {
-      if ($('#starter').length && $('#starter').attr('primary-datasource') === this.name) {
-
-        var currentTitle = $rootScope.viewTitleOnly;
-        var systemName =  $rootScope.systemName && $rootScope.systemName.length ? ' - ' + $rootScope.systemName : '';
-
-        if (this.inserting)
-            currentTitle += ' - ' + this.translate.instant('Inserting');
-        else if (this.editing)
-            currentTitle += ' - ' + this.translate.instant('Editing');
-
-        $('h1.title').text(currentTitle);
-        window.document.title = currentTitle + systemName;
-
+    this.changeTitle = function() {
+      if (!$('#starter').length || $('#starter').attr('primary-datasource') !== this.name) {
+        return;
       }
+
+      var currentTitle = $rootScope.viewTitleOnly;
+      var systemName =  $rootScope.systemName && $rootScope.systemName.length ? ' - ' + $rootScope.systemName : '';
+
+      if (this.inserting)
+          currentTitle += ' - ' + this.translate.instant('Inserting');
+      else if (this.editing)
+          currentTitle += ' - ' + this.translate.instant('Editing');
+
+      $('h1.title').text(currentTitle);
+      window.document.title = currentTitle + systemName;
+
     };
 
     /**
@@ -2229,7 +2230,7 @@ angular.module('datasourcejs', [])
         }
 
         this.resetFieldsStatus();
-        this.changeTitleStatus();
+        this.changeTitle();
 
       }.bind(this));
     };
@@ -2257,7 +2258,7 @@ angular.module('datasourcejs', [])
         this.callDataSourceEvents('updating', this.active);
       }
       this.resetFieldsStatus();
-      this.changeTitleStatus();
+      this.changeTitle();
     };
 
     this.removeSilent = function(object, onSuccess, onError) {
