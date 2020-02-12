@@ -4285,15 +4285,36 @@ angular.module('datasourcejs', [])
  * Cronus Dataset Directive
  */
 .directive('datasource', ['DatasetManager', '$timeout', '$parse', 'Notification', '$translate', '$location','$rootScope', '$compile', '$interpolate',
-  function(DatasetManager, $timeout, $parse, Notification, $translate, $location, $rootScope, $compile, $interpolate) {
+function(DatasetManager, $timeout, $parse, Notification, $translate, $location, $rootScope, $compile, $interpolate) {
   return {
     restrict: 'E',
+    priority: 9999999, //Directives with greater numerical priority are compiled first. Pre-link functions are also run in priority order, but post-link functions are run in reverse order. The order of directives with the same priority is undefined. The default priority is 0
     scope: true,
     template: '',
+    renameTag: function replaceElementTag(targetSelector, scope, newTagString) {
+      $(targetSelector).each(function(){
+        var $this = $(this);
+        var $newElem = $(document.createElement(newTagString), {html: $this.html()});
+
+        $.each(this.attributes, function() {
+          $newElem.attr(this.name, this.value);
+        });
+
+        var events = $this.data('events');
+        if (events) {
+          for (var eventType in events) {
+            for (var idx in events[eventType]) {
+                $newElem[eventType](events[eventType][idx].handler);
+            }
+          }
+        }
+
+        $compile($newElem)(scope);
+        $this.replaceWith($newElem);
+      });
+    },
     link: function(scope, element, attrs) {
-      var cronappDatasource = element.context.outerHTML.split('<datasource').join('<cronapp-datasource').split('datasource>').join('cronapp-datasource>');
-      var e = $compile(cronappDatasource)(scope);
-      element.replaceWith(e);
+      this.renameTag(element, scope, 'cronapp-datasource');
     }
   };
 }])
