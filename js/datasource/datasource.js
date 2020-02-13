@@ -4291,30 +4291,32 @@ function(DatasetManager, $timeout, $parse, Notification, $translate, $location, 
     priority: 9999999, //Directives with greater numerical priority are compiled first. Pre-link functions are also run in priority order, but post-link functions are run in reverse order. The order of directives with the same priority is undefined. The default priority is 0
     scope: true,
     template: '',
-    renameTag: function replaceElementTag(targetSelector, scope, newTagString) {
-      $(targetSelector).each(function(){
-        var $this = $(this);
-        var $newElem = $(document.createElement(newTagString), {html: $this.html()});
+    link: function(scope, element, attrs) {
 
-        $.each(this.attributes, function() {
-          $newElem.attr(this.name, this.value);
-        });
+      var renameTag = function (targetSelector, scope, newTagString) {
+        $(targetSelector).each(function(){
+          var $this = $(this);
+          var $newElem = $(document.createElement(newTagString), {html: $this.html()});
 
-        var events = $this.data('events');
-        if (events) {
-          for (var eventType in events) {
-            for (var idx in events[eventType]) {
+          $.each(this.attributes, function() {
+            $newElem.attr(this.name, this.value);
+          });
+
+          var events = $this.data('events');
+          if (events) {
+            for (var eventType in events) {
+              for (var idx in events[eventType]) {
                 $newElem[eventType](events[eventType][idx].handler);
+              }
             }
           }
-        }
 
-        $compile($newElem)(scope);
-        $this.replaceWith($newElem);
-      });
-    },
-    link: function(scope, element, attrs) {
-      this.renameTag(element, scope, 'cronapp-datasource');
+          $compile($newElem)(scope);
+          $this.replaceWith($newElem);
+        });
+      };
+
+      renameTag(element, scope, 'cronapp-datasource');
     }
   };
 }])
