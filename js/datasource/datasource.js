@@ -2505,10 +2505,13 @@ angular.module('datasourcejs', [])
     /**
      *  Try to fetch the previous page
      */
-    this.nextPage = function() {
+    this.nextPage = function(callback) {
       var resourceURL = (window.hostApp || "") + this.entity;
 
       if (!this.hasNextPage()) {
+        if (callback) {
+          callback();
+        }
         return;
       }
       if (this.apiVersion == 1 || resourceURL.indexOf('/cronapi/') == -1) {
@@ -2522,6 +2525,20 @@ angular.module('datasourcejs', [])
             if (this.apiVersion == 1 || resourceURL.indexOf('/cronapi/') == -1) {
               this.offset = parseInt(this.offset) - this.data.length;
             }
+          }
+
+          if (callback) {
+            callback();
+          }
+        },
+        canceled: function() {
+          if (callback) {
+            callback();
+          }
+        },
+        error: function() {
+          if (callback) {
+            callback();
           }
         }
       }, true);
