@@ -1570,6 +1570,16 @@ angular.module('datasourcejs', [])
       return s;
     };
 
+    this.copyWithoutAngularObj = function() {
+      var newObj = {};
+      for (var key in this) {
+        if (this.hasOwnProperty(key) && !key.startsWith('$')) {
+          newObj[key] = this[key];
+        }
+      }
+      return newObj;
+    };
+
     /**
      * Insert or update based on the the datasource state
      */
