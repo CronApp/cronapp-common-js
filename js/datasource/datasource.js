@@ -2309,21 +2309,22 @@ angular.module('datasourcejs', [])
 
             if (found) {
               if (this.dependentLazyPost || this.batchPost) {
+
+                var deleted = this.data[i];
+                this.copy(this.data[i], deleted);
+                deleted.__status = 'deleted';
+                deleted.__originalIdx = i;
+                if (this.events.memorydelete) {
+                  this.callDataSourceEvents('memorydelete', deleted);
+                }
+
                 if (this.data[i].__status != 'inserted') {
                   if (!this.postDeleteData) {
                     this.postDeleteData = [];
                   }
-                  var deleted = this.data[i];
-                  this.copy(this.data[i], deleted);
-                  deleted.__status = 'deleted';
-                  deleted.__originalIdx = i;
                   this.postDeleteData.push(deleted);
                   this.hasMemoryData = true;
                   this.notifyPendingChanges(this.hasMemoryData);
-
-                  if (this.events.memorydelete) {
-                    this.callDataSourceEvents('memorydelete', deleted);
-                  }
                 }
               }
               // If it's the object we're loking for
