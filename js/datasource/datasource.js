@@ -1570,6 +1570,12 @@ angular.module('datasourcejs', [])
       return s;
     };
 
+    this.asyncPost = function(onSuccess, onError, silent) {
+      setTimeout(function() {
+        this.post(onSuccess, onError, silent);
+      }.bind(this), 100);
+    }
+
     /**
      * Insert or update based on the the datasource state
      */
