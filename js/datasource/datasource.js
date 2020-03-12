@@ -3,6 +3,277 @@ var ISO_PATTERN  = new RegExp("(\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\
 var TIME_PATTERN  = new RegExp("PT(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)(?:\\.(\\d+)?)?S)?");
 var DEP_PATTERN  = new RegExp("\\{\\{(.*?)\\|raw\\}\\}");
 
+var initDatasource = function(scope, element, attrs, DatasetManager, $timeout, $parse, Notification, $translate, $location, $rootScope, $compile, $interpolate) {
+  var instanceId =  parseInt(Math.random() * 9999);
+  //Add in header the path from the request was executed
+  var originPath = "origin-path:" + $location.path();
+  if (attrs.headers === undefined || attrs.headers === null) {
+    attrs.headers = originPath;
+  } else {
+    attrs.headers = attrs.headers.concat(";", originPath);
+  }
+
+  var props = {
+    name: attrs.name,
+    entity: attrs.entity,
+    apiVersion: attrs.apiVersion,
+    enabled: (attrs.hasOwnProperty('enabled')) ? (attrs.enabled === "true") : true,
+    keys: attrs.keys,
+    endpoint: attrs.endpoint,
+    lazy: attrs.lazy === "true",
+    append: !attrs.hasOwnProperty('append') || attrs.append === "true",
+    prepend: (attrs.hasOwnProperty('prepend') && attrs.prepend === "") || attrs.prepend === "true",
+    watch: attrs.watch,
+    rowsPerPage: attrs.rowsPerPage,
+    offset: attrs.offset,
+    filterURL: attrs.filter,
+    watchFilter: attrs.watchFilter,
+    deleteMessage: attrs.deleteMessage || attrs.deleteMessage === "" ? attrs.deleteMessage : $translate.instant('General.RemoveData'),
+    headers: attrs.headers,
+    autoPost: attrs.autoPost === "true",
+    autoRefresh: (attrs.autoRefresh !== undefined && attrs.autoRefresh !== null) ? attrs.autoRefresh : 0,
+    onError: attrs.onError,
+    onAfterFill: attrs.onAfterFill,
+    onBeforeCreate: attrs.onBeforeCreate,
+    onAfterCreate: attrs.onAfterCreate,
+    onBeforeUpdate: attrs.onBeforeUpdate,
+    onAfterUpdate: attrs.onAfterUpdate,
+    onBeforeDelete: attrs.onBeforeDelete,
+    onAfterDelete: attrs.onAfterDelete,
+    onGet: attrs.onGet,
+    onPost: attrs.onPost,
+    onPut: attrs.onPut,
+    onDelete: attrs.onDelete,
+    defaultNotSpecifiedErrorMessage: $translate.instant('General.ErrorNotSpecified'),
+    dependentBy: attrs.dependentBy,
+    dependentLazyPost: attrs.dependentLazyPost,
+    batchPost: attrs.batchpost === "true",
+    dependentLazyPostField: attrs.dependentLazyPostField,
+    parameters: attrs.parameters,
+    parametersNullStrategy: attrs.parametersNullStrategy?attrs.parametersNullStrategy:"default",
+    parametersExpression: $(element).attr('parameters'),
+    conditionExpression: $(element).attr('condition'),
+    condition: attrs.condition,
+    orderBy: attrs.orderBy,
+    schema: attrs.schema ? JSON.parse(attrs.schema) : undefined,
+    checkRequired: !attrs.hasOwnProperty('checkrequired') || attrs.checkrequired === "" || attrs.checkrequired === "true"
+  }
+
+  var firstLoad = {
+    filter: true,
+    entity: true,
+    enabled: true,
+    parameters: true
+  }
+
+  var urlParameters;
+  if (scope.params) {
+    for (var paramKey in scope.params) {
+      if (scope.params.hasOwnProperty(paramKey)) {
+        var value = scope.params[paramKey];
+        if (paramKey.startsWith("$"+attrs.name+".")) {
+          var key = paramKey.split(".");
+          if (key.length == 2) {
+            if (key[1] == "$filterMode") {
+              props.startMode = value;
+            } else {
+              if (urlParameters) {
+                urlParameters += ";";
+              } else {
+                urlParameters = "";
+              }
+              if (!isNaN(value)) {
+                urlParameters += key[1]+"="+value;
+              } else {
+                urlParameters += key[1]+"='"+value+"'";
+              }
+
+
+            }
+          }
+
+        }
+      }
+    }
+
+    if (urlParameters) {
+      props.parameters = urlParameters;
+      props.parametersExpression = urlParameters;
+    }
+  }
+
+  var instanceId =  parseInt(Math.random() * 9999);
+  var datasource = DatasetManager.initDataset(props, scope, $compile, $parse, $interpolate, instanceId, $translate);
+  var timeoutPromise;
+
+  attrs.$observe('filter', function(value) {
+    if (datasource.isPostingBatchData()) {
+      return;
+    }
+
+    if (!firstLoad.filter) {
+      // Stop the pending timeout
+      $timeout.cancel(timeoutPromise);
+
+      // Start a timeout
+      timeoutPromise = $timeout(function() {
+        if (datasource.events.overRideRefresh) {
+          datasource.callDataSourceEvents('overRideRefresh', 'filter', value);
+        } else {
+          datasource.filter(value, function (data) {
+            if (datasource.events.refresh) {
+              datasource.callDataSourceEvents('refresh', data, 'filter');
+            }
+          });
+        }
+        datasource.lastFilterParsed = value;
+      }, 100);
+    } else {
+      $timeout(function() {
+        firstLoad.filter = false;
+      }, 0);
+    }
+  });
+
+  if (!urlParameters) {
+    attrs.$observe('parameters', function(value) {
+      if (datasource.isPostingBatchData()) {
+        return;
+      }
+
+      if (datasource.parameters != value) {
+        datasource.parameters = value;
+
+        $timeout.cancel(timeoutPromise);
+        timeoutPromise =$timeout(function() {
+          datasource.callDataSourceEvents('changeDependency', 'parameters', datasource.parameters);
+
+          if (datasource.events.overRideRefresh) {
+            datasource.callDataSourceEvents('overRideRefresh', 'parameters', datasource.parameters);
+          } else {
+            datasource.fetch({
+              params: {}
+            }, {
+              success: function (data) {
+                if (datasource.events.refresh) {
+                  datasource.callDataSourceEvents('refresh', data, 'parameters');
+                }
+              }
+            });
+          }
+        }, 0);
+
+      }
+    });
+  }
+
+  attrs.$observe('condition', function(value) {
+    if (datasource.isPostingBatchData()) {
+      return;
+    }
+
+    if (datasource.condition != value) {
+      datasource.condition = value;
+
+      if (datasource.loadDataStrategy === "button") {
+        return;
+      }
+
+      $timeout.cancel(timeoutPromise);
+      timeoutPromise =$timeout(function() {
+        datasource.callDataSourceEvents('changeDependency', 'condition', datasource.condition);
+
+        if (datasource.events.overRideRefresh) {
+          datasource.callDataSourceEvents('overRideRefresh', 'condition', datasource.condition);
+        } else {
+          datasource.fetch({
+            params: {}
+          }, {
+            success: function (data) {
+              if (datasource.events.refresh) {
+                datasource.callDataSourceEvents('refresh', data, 'condition');
+              }
+            }
+          });
+        }
+      }, 0);
+
+    }
+  });
+
+  attrs.$observe('enabled', function(value) {
+    var boolValue = (value === "true");
+
+    if (datasource.enabled != boolValue) {
+      datasource.enabled = boolValue;
+
+      if (datasource.enabled) {
+        $timeout.cancel(timeoutPromise);
+        timeoutPromise =$timeout(function () {
+          if (datasource.events.overRideRefresh) {
+            datasource.callDataSourceEvents('overRideRefresh', 'enabled', datasource.parameters);
+          } else {
+            datasource.fetch({
+                params: {}
+              },
+              {
+                success: function (data) {
+                  if (datasource.events.refresh) {
+                    datasource.callDataSourceEvents('refresh', data, 'enabled');
+                  }
+                }
+              }
+            );
+          }
+        }, 200);
+      }
+    }
+  });
+
+  attrs.$observe('entity', function(value) {
+    datasource.entity = value;
+
+    if (window.dataSourceMap && window.dataSourceMap[datasource.entity]) {
+      datasource.entity = window.dataSourceMap[datasource.entity].serviceUrlODATA || window.dataSourceMap[datasource.entity].serviceUrl;
+      if(datasource.entity.charAt(0) === "/"){
+        datasource.entity = datasource.entity.substr(1);
+      }
+    }
+
+    if (!firstLoad.entity) {
+      // Only fetch if it's not the first load
+
+      $timeout.cancel(timeoutPromise);
+
+      timeoutPromise = $timeout(function() {
+        datasource.fetch({
+            params: {}
+          },
+          {
+            success : function (data) {
+              if (datasource.events.refresh) {
+                datasource.callDataSourceEvents('refresh', data, 'entity');
+              }
+            }
+          }
+        );
+      }, 200);
+    } else {
+      $timeout(function() {
+        firstLoad.entity = false;
+      });
+    }
+  });
+  scope.$on('$destroy', function() {
+    if ($rootScope[attrs.name] && $rootScope[attrs.name+".instanceId"] == instanceId) {
+      $rootScope[attrs.name].destroy();
+      delete window[attrs.name];
+      delete $rootScope[attrs.name];
+      delete  $rootScope[attrs.name+".instanceId"];
+    }
+  });
+};
+
 angular.module('datasourcejs', [])
 
 /**
@@ -510,6 +781,12 @@ angular.module('datasourcejs', [])
       this.handleError = function(data) {
         console.log(data);
 
+        if (data instanceof XMLDocument) {
+          var errorMsg = data.getElementsByTagName("message")[0].textContent;
+          data = errorMsg;
+          console.log(data);
+        }
+
         var error = "";
 
         if (data) {
@@ -539,11 +816,22 @@ angular.module('datasourcejs', [])
 
         this.errorMessage = error;
 
-        if (this.onError && this.onError != '') {
+        if (this.onError && this.onError !== '') {
           if (typeof(this.onError) === 'string') {
             try {
-              var indexFunc = this.onError.indexOf('(') == -1 ? this.onError.length : this.onError.indexOf('(');
-              var func = eval(this.onError.substring(0, indexFunc));
+              var contextVars = {
+                'currentData': this.active,
+                'filter': "",
+                'datasource': this,
+                'selectedIndex': this.cursor,
+                'index': this.cursor,
+                'selectedRow': this.active,
+                'item': this.active,
+                'selectedKeys': this.getKeyValues(this.active, true),
+                'selectedKey': this.getFirstKeyValue(this.active, true),
+                'callback': this.successCallback
+              };
+              var func = this.$scope.$eval(this.onError, contextVars);
               if (typeof(func) === 'function') {
                 this.onError = func;
               }
@@ -962,8 +1250,8 @@ angular.module('datasourcejs', [])
 
                 if (odataFiles && odataFiles.length > 0) {
                   _self.sendODataFiles(odataFiles, newObj, function (result) {
-                    currentObj[result.field] = result.data[result.field];
-                  }, function() {
+                    this.copy(result.data, currentObj);
+                  }.bind(this), function() {
                     resolve();
                   });
                 } else {
@@ -998,8 +1286,8 @@ angular.module('datasourcejs', [])
                 }
                 if (odataFiles && odataFiles.length > 0) {
                   _self.sendODataFiles(odataFiles, newObj, function (result) {
-                    currentObj[result.field] = result.data[result.field];
-                  }, function() {
+                    this.copy(result.data, currentObj);
+                  }.bind(this), function() {
                     resolve();
                   });
                 } else {
@@ -1234,9 +1522,14 @@ angular.module('datasourcejs', [])
           xhr.setRequestHeader('X-AUTH-TOKEN', _u.token);
 
           xhr.onreadystatechange = function(){
+            if(xhr.readyState === 4 && xhr.status === 500){
+              var parser = new DOMParser();
+              var error = parser.parseFromString(xhr.response,"text/xml");
+              this.handleError(error);
+            }
             if(xhr.readyState === 4 && xhr.status === 201){
               //Having to make another request to get the base64 value
-              service.call(url + '/' +  of.field, 'GET', {}, false).$promise.error(function(errorMsg) {
+              service.call(url, 'GET', {}, false).$promise.error(function(errorMsg) {
                 Notification.error('Error send file');
               }).then(function(data, resultBool) {
                 if (callback) {
@@ -1248,7 +1541,7 @@ angular.module('datasourcejs', [])
                 resolve();
               });
             }
-          };
+          }.bind(this);
 
           xhr.send(file);
 
@@ -1276,6 +1569,12 @@ angular.module('datasourcejs', [])
       }
       return s;
     };
+
+    this.asyncPost = function(onSuccess, onError, silent) {
+      setTimeout(function() {
+        this.post(onSuccess, onError, silent);
+      }.bind(this), 100);
+    }
 
     /**
      * Insert or update based on the the datasource state
@@ -1344,7 +1643,7 @@ angular.module('datasourcejs', [])
 
             if (odataFiles && odataFiles.length > 0) {
               this.sendODataFiles(odataFiles, obj, function (result) {
-                obj[result.field] = result.data[result.field];
+                this.copy(result.data, obj);
               }.bind(this), function() {
                 proceed()
               }.bind(this));
@@ -1409,7 +1708,6 @@ angular.module('datasourcejs', [])
                 }
               }
               this.notifyPendingChanges(this.hasMemoryData);
-              this.handleAfterCallBack(this.onAfterUpdate);
 
               if (this.events.update && hotData) {
                 this.callDataSourceEvents('update', this.active);
@@ -1423,6 +1721,11 @@ angular.module('datasourcejs', [])
           }.bind(this));
 
           var back = function() {
+
+            if (foundRow) {
+              this.handleAfterCallBack(this.onAfterUpdate);
+            }
+
             this.onBackNomalState();
 
             if (onSuccess) {
@@ -1436,7 +1739,7 @@ angular.module('datasourcejs', [])
             } else {
               if (odataFiles && odataFiles.length > 0) {
                 this.sendODataFiles(odataFiles, foundRow, function (result) {
-                  foundRow[result.field] = result.data[result.field];
+                  this.copy(result.data, foundRow);
                 }.bind(this), function() {
                   if (this.events.update && hotData) {
                     this.callDataSourceEvents('update', foundRow);
@@ -1755,6 +2058,7 @@ angular.module('datasourcejs', [])
         this.busy = false;
         this.editing = false;
         this.inserting = false;
+        this.changeTitle();
       }.bind(this))
     };
 
@@ -1877,6 +2181,38 @@ angular.module('datasourcejs', [])
       }
     }
 
+    this.resetFieldsStatus = function() {
+
+        var waitingBecameVisible = setInterval(function() {
+            if ($('input[ng-model*="'+this.name+'."]').is(':visible')) {
+                $('input[ng-model*="'+this.name+'."]:invalid:empty').removeClass('ng-invalid ng-invalid-required');
+                clearInterval(waitingBecameVisible);
+            }
+            else if ($('input[ng-model*="'+this.name+'."].cronMultiSelect')) {
+                clearInterval(waitingBecameVisible);
+            }
+        }, 100);
+
+    };
+
+    this.changeTitle = function() {
+      if (!$('#starter').length || $('#starter').attr('primary-datasource') !== this.name) {
+        return;
+      }
+
+      var currentTitle = $rootScope.viewTitleOnly;
+      var systemName =  $rootScope.systemName && $rootScope.systemName.length ? ' - ' + $rootScope.systemName : '';
+
+      if (this.inserting)
+          currentTitle += ' - ' + this.translate.instant('Inserting');
+      else if (this.editing)
+          currentTitle += ' - ' + this.translate.instant('Editing');
+
+      $('h1.title').text(currentTitle);
+      window.document.title = currentTitle + systemName;
+
+    };
+
     /**
      * Put the datasource into the inserting state
      */
@@ -1898,6 +2234,10 @@ angular.module('datasourcejs', [])
         if (this.events.creating) {
           this.callDataSourceEvents('creating', this.active);
         }
+
+        this.resetFieldsStatus();
+        this.changeTitle();
+
       }.bind(this));
     };
 
@@ -1923,6 +2263,8 @@ angular.module('datasourcejs', [])
       if (this.events.editing) {
         this.callDataSourceEvents('updating', this.active);
       }
+      this.resetFieldsStatus();
+      this.changeTitle();
     };
 
     this.removeSilent = function(object, onSuccess, onError) {
@@ -1973,21 +2315,22 @@ angular.module('datasourcejs', [])
 
             if (found) {
               if (this.dependentLazyPost || this.batchPost) {
+
+                var deleted = this.data[i];
+                this.copy(this.data[i], deleted);
+                deleted.__status = 'deleted';
+                deleted.__originalIdx = i;
+                if (this.events.memorydelete) {
+                  this.callDataSourceEvents('memorydelete', deleted);
+                }
+
                 if (this.data[i].__status != 'inserted') {
                   if (!this.postDeleteData) {
                     this.postDeleteData = [];
                   }
-                  var deleted = this.data[i];
-                  this.copy(this.data[i], deleted);
-                  deleted.__status = 'deleted';
-                  deleted.__originalIdx = i;
                   this.postDeleteData.push(deleted);
                   this.hasMemoryData = true;
                   this.notifyPendingChanges(this.hasMemoryData);
-
-                  if (this.events.memorydelete) {
-                    this.callDataSourceEvents('memorydelete', deleted);
-                  }
                 }
               }
               // If it's the object we're loking for
@@ -2169,10 +2512,13 @@ angular.module('datasourcejs', [])
     /**
      *  Try to fetch the previous page
      */
-    this.nextPage = function() {
+    this.nextPage = function(callback) {
       var resourceURL = (window.hostApp || "") + this.entity;
 
       if (!this.hasNextPage()) {
+        if (callback) {
+          callback();
+        }
         return;
       }
       if (this.apiVersion == 1 || resourceURL.indexOf('/cronapi/') == -1) {
@@ -2186,6 +2532,20 @@ angular.module('datasourcejs', [])
             if (this.apiVersion == 1 || resourceURL.indexOf('/cronapi/') == -1) {
               this.offset = parseInt(this.offset) - this.data.length;
             }
+          }
+
+          if (callback) {
+            callback();
+          }
+        },
+        canceled: function() {
+          if (callback) {
+            callback();
+          }
+        },
+        error: function() {
+          if (callback) {
+            callback();
           }
         }
       }, true);
@@ -2666,26 +3026,34 @@ angular.module('datasourcejs', [])
       }
     }
 
-    this.callDataSourceEvents = function(key, param) {
-      if (this.events) {
-        var event = this.events[key];
-        if (event) {
-          if (Object.prototype.toString.call(event) !== '[object Array]') {
-            event = [event];
-          }
+      this.callDataSourceEvents = function(key, param) {
+        if (this.events) {
+          var event = this.events[key];
+          if (event) {
+            if (Object.prototype.toString.call(event) !== '[object Array]') {
+              event = [event];
+            }
 
-          var args = [];
-          for (var j = 1; j < arguments.length; j++) {
-            args.push(arguments[j]);
-          }
+            var args = [];
+            for (var j = 1; j < arguments.length; j++) {
+              args.push(arguments[j]);
+            }
 
-          for (var i = 0; i < event.length; i++) {
-            event[i].apply(null, args);
-          }
+            var toBeExecutedAlways = [];
+            for (var j = 0; j < event.length; j++)
+              toBeExecutedAlways.push(event[j]);
 
+            for (var i = 0; i < toBeExecutedAlways.length; i++) {
+              try {
+                toBeExecutedAlways[i].apply(null, args);
+              }
+              catch (err) {
+                console.log('Error', 'Event no more exist in datasource');
+              }
+            }
+          }
         }
       }
-    }
 
     this.storeInMemory = function(id) {
       if (!this.memoryData) {
@@ -3469,9 +3837,9 @@ angular.module('datasourcejs', [])
             filter += ";";
             filter += paramFilter;
           }
-        } 
+        }
       }
-      
+
       var paramOrder = null;
 
       if (this.isOData() && props.params.$orderby) {
@@ -3940,285 +4308,39 @@ angular.module('datasourcejs', [])
 /**
  * Cronus Dataset Directive
  */
-.directive('datasource', ['DatasetManager', '$timeout', '$parse', 'Notification', '$translate', '$location','$rootScope', '$compile', '$interpolate', function(DatasetManager, $timeout, $parse, Notification, $translate, $location, $rootScope, $compile, $interpolate) {
+.directive('datasource', ['DatasetManager', '$timeout', '$parse', 'Notification', '$translate', '$location','$rootScope', '$compile', '$interpolate',
+function(DatasetManager, $timeout, $parse, Notification, $translate, $location, $rootScope, $compile, $interpolate) {
   return {
     restrict: 'E',
+    priority: 9999999, //Directives with greater numerical priority are compiled first. Pre-link functions are also run in priority order, but post-link functions are run in reverse order. The order of directives with the same priority is undefined. The default priority is 0
     scope: true,
     template: '',
     link: function(scope, element, attrs) {
-      var instanceId =  parseInt(Math.random() * 9999);
-      var init = function() {
 
-        //Add in header the path from the request was executed
-        var originPath = "origin-path:" + $location.path();
-        if (attrs.headers === undefined || attrs.headers === null) {
-          attrs.headers = originPath;
-        } else {
-          attrs.headers = attrs.headers.concat(";", originPath);
-        }
+      var renameTag = function (targetSelector, scope, newTagString) {
+        $(targetSelector).each(function(){
+          var $this = $(this);
+          var $newElem = $(document.createElement(newTagString), {html: $this.html()});
 
-        var props = {
-          name: attrs.name,
-          entity: attrs.entity,
-          apiVersion: attrs.apiVersion,
-          enabled: (attrs.hasOwnProperty('enabled')) ? (attrs.enabled === "true") : true,
-          keys: attrs.keys,
-          endpoint: attrs.endpoint,
-          lazy: attrs.lazy === "true",
-          append: !attrs.hasOwnProperty('append') || attrs.append === "true",
-          prepend: (attrs.hasOwnProperty('prepend') && attrs.prepend === "") || attrs.prepend === "true",
-          watch: attrs.watch,
-          rowsPerPage: attrs.rowsPerPage,
-          offset: attrs.offset,
-          filterURL: attrs.filter,
-          watchFilter: attrs.watchFilter,
-          deleteMessage: attrs.deleteMessage || attrs.deleteMessage === "" ? attrs.deleteMessage : $translate.instant('General.RemoveData'),
-          headers: attrs.headers,
-          autoPost: attrs.autoPost === "true",
-          autoRefresh: (attrs.autoRefresh !== undefined && attrs.autoRefresh !== null) ? attrs.autoRefresh : 0,
-          onError: attrs.onError,
-          onAfterFill: attrs.onAfterFill,
-          onBeforeCreate: attrs.onBeforeCreate,
-          onAfterCreate: attrs.onAfterCreate,
-          onBeforeUpdate: attrs.onBeforeUpdate,
-          onAfterUpdate: attrs.onAfterUpdate,
-          onBeforeDelete: attrs.onBeforeDelete,
-          onAfterDelete: attrs.onAfterDelete,
-          onGet: attrs.onGet,
-          onPost: attrs.onPost,
-          onPut: attrs.onPut,
-          onDelete: attrs.onDelete,
-          defaultNotSpecifiedErrorMessage: $translate.instant('General.ErrorNotSpecified'),
-          dependentBy: attrs.dependentBy,
-          dependentLazyPost: attrs.dependentLazyPost,
-          batchPost: attrs.batchpost === "true",
-          dependentLazyPostField: attrs.dependentLazyPostField,
-          parameters: attrs.parameters,
-          parametersNullStrategy: attrs.parametersNullStrategy?attrs.parametersNullStrategy:"default",
-          parametersExpression: $(element).attr('parameters'),
-          conditionExpression: $(element).attr('condition'),
-          condition: attrs.condition,
-          orderBy: attrs.orderBy,
-          schema: attrs.schema ? JSON.parse(attrs.schema) : undefined,
-          checkRequired: !attrs.hasOwnProperty('checkrequired') || attrs.checkrequired === "" || attrs.checkrequired === "true"
-        }
-
-        var firstLoad = {
-          filter: true,
-          entity: true,
-          enabled: true,
-          parameters: true
-        }
-
-        var urlParameters;
-        if (scope.params) {
-          for (var paramKey in scope.params) {
-            if (scope.params.hasOwnProperty(paramKey)) {
-              var value = scope.params[paramKey];
-              if (paramKey.startsWith("$"+attrs.name+".")) {
-                var key = paramKey.split(".");
-                if (key.length == 2) {
-                  if (key[1] == "$filterMode") {
-                    props.startMode = value;
-                  } else {
-                    if (urlParameters) {
-                      urlParameters += ";";
-                    } else {
-                      urlParameters = "";
-                    }
-                    if (!isNaN(value)) {
-                      urlParameters += key[1]+"="+value;
-                    } else {
-                      urlParameters += key[1]+"='"+value+"'";
-                    }
-
-
-                  }
-                }
-
-              }
-            }
-          }
-
-          if (urlParameters) {
-            props.parameters = urlParameters;
-            props.parametersExpression = urlParameters;
-          }
-        }
-
-        var instanceId =  parseInt(Math.random() * 9999);
-        var datasource = DatasetManager.initDataset(props, scope, $compile, $parse, $interpolate, instanceId, $translate);
-        var timeoutPromise;
-
-        attrs.$observe('filter', function(value) {
-          if (datasource.isPostingBatchData()) {
-            return;
-          }
-
-          if (!firstLoad.filter) {
-            // Stop the pending timeout
-            $timeout.cancel(timeoutPromise);
-
-            // Start a timeout
-            timeoutPromise = $timeout(function() {
-              if (datasource.events.overRideRefresh) {
-                datasource.callDataSourceEvents('overRideRefresh', 'filter', value);
-              } else {
-                datasource.filter(value, function (data) {
-                  if (datasource.events.refresh) {
-                    datasource.callDataSourceEvents('refresh', data, 'filter');
-                  }
-                });
-              }
-              datasource.lastFilterParsed = value;
-            }, 100);
-          } else {
-            $timeout(function() {
-              firstLoad.filter = false;
-            }, 0);
-          }
-        });
-
-        if (!urlParameters) {
-          attrs.$observe('parameters', function(value) {
-            if (datasource.isPostingBatchData()) {
-              return;
-            }
-
-            if (datasource.parameters != value) {
-              datasource.parameters = value;
-
-              $timeout.cancel(timeoutPromise);
-              timeoutPromise =$timeout(function() {
-                datasource.callDataSourceEvents('changeDependency', 'parameters', datasource.parameters);
-
-                if (datasource.events.overRideRefresh) {
-                  datasource.callDataSourceEvents('overRideRefresh', 'parameters', datasource.parameters);
-                } else {
-                  datasource.fetch({
-                    params: {}
-                  }, {
-                    success: function (data) {
-                      if (datasource.events.refresh) {
-                        datasource.callDataSourceEvents('refresh', data, 'parameters');
-                      }
-                    }
-                  });
-                }
-              }, 0);
-
-            }
+          $.each(this.attributes, function() {
+            $newElem.attr(this.name, this.value);
           });
-        }
 
-        attrs.$observe('condition', function(value) {
-          if (datasource.isPostingBatchData()) {
-            return;
-          }
-
-          if (datasource.condition != value) {
-            datasource.condition = value;
-
-            if (datasource.loadDataStrategy === "button") {
-              return;
-            }
-
-            $timeout.cancel(timeoutPromise);
-            timeoutPromise =$timeout(function() {
-              datasource.callDataSourceEvents('changeDependency', 'condition', datasource.condition);
-
-              if (datasource.events.overRideRefresh) {
-                datasource.callDataSourceEvents('overRideRefresh', 'condition', datasource.condition);
-              } else {
-                datasource.fetch({
-                  params: {}
-                }, {
-                  success: function (data) {
-                    if (datasource.events.refresh) {
-                      datasource.callDataSourceEvents('refresh', data, 'condition');
-                    }
-                  }
-                });
+          var events = $this.data('events');
+          if (events) {
+            for (var eventType in events) {
+              for (var idx in events[eventType]) {
+                $newElem[eventType](events[eventType][idx].handler);
               }
-            }, 0);
-
-          }
-        });
-
-        attrs.$observe('enabled', function(value) {
-          var boolValue = (value === "true");
-
-          if (datasource.enabled != boolValue) {
-            datasource.enabled = boolValue;
-
-            if (datasource.enabled) {
-              $timeout.cancel(timeoutPromise);
-              timeoutPromise =$timeout(function () {
-                if (datasource.events.overRideRefresh) {
-                  datasource.callDataSourceEvents('overRideRefresh', 'enabled', datasource.parameters);
-                } else {
-                  datasource.fetch({
-                        params: {}
-                      },
-                      {
-                        success: function (data) {
-                          if (datasource.events.refresh) {
-                            datasource.callDataSourceEvents('refresh', data, 'enabled');
-                          }
-                        }
-                      }
-                  );
-                }
-              }, 200);
-            }
-          }
-        });
-
-        attrs.$observe('entity', function(value) {
-          datasource.entity = value;
-
-          if (window.dataSourceMap && window.dataSourceMap[datasource.entity]) {
-            datasource.entity = window.dataSourceMap[datasource.entity].serviceUrlODATA || window.dataSourceMap[datasource.entity].serviceUrl;
-            if(datasource.entity.charAt(0) === "/"){
-              datasource.entity = datasource.entity.substr(1);
             }
           }
 
-          if (!firstLoad.entity) {
-            // Only fetch if it's not the first load
-
-            $timeout.cancel(timeoutPromise);
-
-            timeoutPromise = $timeout(function() {
-              datasource.fetch({
-                    params: {}
-                  },
-                  {
-                    success : function (data) {
-                      if (datasource.events.refresh) {
-                        datasource.callDataSourceEvents('refresh', data, 'entity');
-                      }
-                    }
-                  }
-              );
-            }, 200);
-          } else {
-            $timeout(function() {
-              firstLoad.entity = false;
-            });
-          }
+          $compile($newElem)(scope);
+          $this.replaceWith($newElem);
         });
-
       };
-      init();
-      scope.$on('$destroy', function() {
-        if ($rootScope[attrs.name] && $rootScope[attrs.name+".instanceId"] == instanceId) {
-          $rootScope[attrs.name].destroy();
-          delete window[attrs.name];
-          delete $rootScope[attrs.name];
-          delete  $rootScope[attrs.name+".instanceId"];
-        }
-      });
+
+      renameTag(element, scope, 'cronapp-datasource');
     }
   };
 }])
@@ -4269,4 +4391,19 @@ app.directive('crnRepeat', function(DatasetManager, $compile, $parse, $injector,
       }
     }
   };
-}]);
+}])
+
+/**
+ * Cronapp Datasource Directive
+ */
+.directive('cronappDatasource', ['DatasetManager', '$timeout', '$parse', 'Notification', '$translate', '$location','$rootScope', '$compile', '$interpolate',
+  function(DatasetManager, $timeout, $parse, Notification, $translate, $location, $rootScope, $compile, $interpolate) {
+  return {
+    restrict: 'E',
+    scope: true,
+    template: '',
+    link: function(scope, element, attrs) {
+      initDatasource(scope, element, attrs, DatasetManager, $timeout, $parse, Notification, $translate, $location, $rootScope, $compile, $interpolate);
+    }
+  };
+}])
