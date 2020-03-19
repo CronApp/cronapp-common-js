@@ -2316,7 +2316,7 @@ angular.module('datasourcejs', [])
             if (found) {
               if (this.dependentLazyPost || this.batchPost) {
 
-                var deleted = this.data[i];
+                var deleted = {};
                 this.copy(this.data[i], deleted);
                 deleted.__status = 'deleted';
                 deleted.__originalIdx = i;
