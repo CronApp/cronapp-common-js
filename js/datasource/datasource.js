@@ -695,7 +695,9 @@ angular.module('datasourcejs', [])
                 }
               }
 
-              if (result) {
+              if (result instanceof Promise) {
+                result.then(result => this.successCallback(result)).catch(reason => _self.handleError(reason))
+              }else if(result){
                 this.successCallback(result);
               }
 
