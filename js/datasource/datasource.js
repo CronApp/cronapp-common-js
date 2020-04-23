@@ -55,6 +55,7 @@ var initDatasource = function(scope, element, attrs, DatasetManager, $timeout, $
     conditionExpression: $(element).attr('condition'),
     condition: attrs.condition,
     orderBy: attrs.orderBy,
+    loadDataStrategy: attrs.loadDataStrategy,
     schema: attrs.schema ? JSON.parse(attrs.schema) : undefined,
     checkRequired: !attrs.hasOwnProperty('checkrequired') || attrs.checkrequired === "" || attrs.checkrequired === "true"
   }
@@ -4234,6 +4235,7 @@ angular.module('datasourcejs', [])
         dts.$compile = $compile;
         dts.$parse = $parse;
         dts.$interpolate = $interpolate;
+        dts.loadDataStrategy = props.loadDataStrategy;
 
         if (props.dependentLazyPost && props.dependentLazyPost.length > 0) {
           dts.dependentLazyPost = props.dependentLazyPost;
