@@ -425,6 +425,10 @@ angular.module('datasourcejs', [])
               }
 
               if (result instanceof Promise) {
+                _self = this;
+               if (result && Object.prototype.toString.call(result) !== '[object Array]') {
+                  result = [result];
+                }
                 result.then(function(result) {_self.successCallback(result)}).catch(function(reason){_self.handleError(reason)})
               } else if(result){
                 this.successCallback(result);
