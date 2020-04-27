@@ -2227,7 +2227,7 @@ angular.module('datasourcejs', [])
       else if (this.editing)
           currentTitle += ' - ' + this.translate.instant('Editing');
 
-      $('h1.title').text(currentTitle);
+      $('h1.title:first').text(currentTitle);
       window.document.title = currentTitle + systemName;
 
     };
