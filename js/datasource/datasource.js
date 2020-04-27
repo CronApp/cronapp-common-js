@@ -2219,7 +2219,7 @@ angular.module('datasourcejs', [])
         return;
       }
 
-      var currentTitle = $rootScope.viewTitleOnly;
+      var currentTitle = this.translate.instant($rootScope.viewTitleOnly);
       var systemName =  $rootScope.systemName && $rootScope.systemName.length ? ' - ' + $rootScope.systemName : '';
 
       if (this.inserting)
