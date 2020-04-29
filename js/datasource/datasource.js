@@ -602,7 +602,6 @@ angular.module('datasourcejs', [])
       }
 
       this.getService = function(verb) {
-        _self = this;
         var event = eval("this.on"+verb);
 
         if (event || this.isLocalData()) {
@@ -3857,8 +3856,6 @@ angular.module('datasourcejs', [])
             filter += ";";
             filter += paramFilter;
           }
-        } else {
-          filter = paramFilter;
         }
       }
 
