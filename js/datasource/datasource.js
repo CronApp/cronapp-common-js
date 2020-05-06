@@ -369,6 +369,20 @@ angular.module('datasourcejs', [])
 
               if (event) {
                 result = _self.$scope.$eval(event, contextVars);
+
+                if (result instanceof Promise) {
+                  result.then(function(result) {
+                    if (result && Object.prototype.toString.call(result) !== '[object Array]') {
+                      result = [result];
+                    }
+                    _self.$scope.safeApply(function() {
+                      this.successCallback(result)
+                    }.bind(this));
+                  }.bind(this)).catch(function(reason){_self.handleError(reason)}.bind(this))
+                } else if(result){
+                  this.successCallback(result);
+                }
+
               } else {
                 var args = [];
 
@@ -423,18 +437,6 @@ angular.module('datasourcejs', [])
                     }
                   }.bind(this));
                 }
-              }
-
-              if (result instanceof Promise) {
-                _self = this;
-                result.then(function(result) {
-                  if (result && Object.prototype.toString.call(result) !== '[object Array]') {
-                    result = [result];
-                  }
-                  _self.successCallback(result)
-                }).catch(function(reason){_self.handleError(reason)})
-              } else if(result){
-                this.successCallback(result);
               }
 
             }.bind(promise),0);
