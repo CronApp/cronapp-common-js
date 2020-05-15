@@ -55,6 +55,7 @@ var initDatasource = function(scope, element, attrs, DatasetManager, $timeout, $
     conditionExpression: $(element).attr('condition'),
     condition: attrs.condition,
     orderBy: attrs.orderBy,
+    loadDataStrategy: attrs.loadDataStrategy,
     schema: attrs.schema ? JSON.parse(attrs.schema) : undefined,
     checkRequired: !attrs.hasOwnProperty('checkrequired') || attrs.checkrequired === "" || attrs.checkrequired === "true"
   }
@@ -601,6 +602,7 @@ angular.module('datasourcejs', [])
       }
 
       this.getService = function(verb) {
+        _self = this;
         var event = eval("this.on"+verb);
 
         if (event || this.isLocalData()) {
@@ -639,6 +641,20 @@ angular.module('datasourcejs', [])
 
               if (event) {
                 result = _self.$scope.$eval(event, contextVars);
+
+                if (result instanceof Promise) {
+                  result.then(function(result) {
+                    if (result && Object.prototype.toString.call(result) !== '[object Array]') {
+                      result = [result];
+                    }
+                    _self.$scope.safeApply(function() {
+                      this.successCallback(result)
+                    }.bind(this));
+                  }.bind(this)).catch(function(reason){_self.handleError(reason)}.bind(this))
+                } else if(result){
+                  this.successCallback(result);
+                }
+
               } else {
                 var args = [];
 
@@ -693,10 +709,6 @@ angular.module('datasourcejs', [])
                     }
                   }.bind(this));
                 }
-              }
-
-              if (result) {
-                this.successCallback(result);
               }
 
             }.bind(promise),0);
@@ -1576,6 +1588,16 @@ angular.module('datasourcejs', [])
       }.bind(this), 100);
     }
 
+    this.copyWithoutAngularObj = function() {
+      var newObj = {};
+      for (var key in this) {
+        if (this.hasOwnProperty(key) && !key.startsWith('$')) {
+          newObj[key] = this[key];
+        }
+      }
+      return newObj;
+    };
+
     /**
      * Insert or update based on the the datasource state
      */
@@ -2200,7 +2222,7 @@ angular.module('datasourcejs', [])
         return;
       }
 
-      var currentTitle = $rootScope.viewTitleOnly;
+      var currentTitle = this.translate.instant($rootScope.viewTitleOnly);
       var systemName =  $rootScope.systemName && $rootScope.systemName.length ? ' - ' + $rootScope.systemName : '';
 
       if (this.inserting)
@@ -2208,7 +2230,7 @@ angular.module('datasourcejs', [])
       else if (this.editing)
           currentTitle += ' - ' + this.translate.instant('Editing');
 
-      $('h1.title').text(currentTitle);
+      $('h1.title:first').text(currentTitle);
       window.document.title = currentTitle + systemName;
 
     };
@@ -2316,7 +2338,7 @@ angular.module('datasourcejs', [])
             if (found) {
               if (this.dependentLazyPost || this.batchPost) {
 
-                var deleted = this.data[i];
+                var deleted = {};
                 this.copy(this.data[i], deleted);
                 deleted.__status = 'deleted';
                 deleted.__originalIdx = i;
@@ -3837,6 +3859,8 @@ angular.module('datasourcejs', [])
             filter += ";";
             filter += paramFilter;
           }
+        } else {
+          filter = paramFilter;
         }
       }
 
@@ -4222,6 +4246,7 @@ angular.module('datasourcejs', [])
         dts.$compile = $compile;
         dts.$parse = $parse;
         dts.$interpolate = $interpolate;
+        dts.loadDataStrategy = props.loadDataStrategy;
 
         if (props.dependentLazyPost && props.dependentLazyPost.length > 0) {
           dts.dependentLazyPost = props.dependentLazyPost;
