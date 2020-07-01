@@ -96,7 +96,7 @@ var initDatasource = function(scope, element, attrs, DatasetManager, $timeout, $
     loadDataStrategy: attrs.loadDataStrategy,
     schema: attrs.schema ? JSON.parse(attrs.schema) : undefined,
     checkRequired: !attrs.hasOwnProperty('checkrequired') || attrs.checkrequired === "" || attrs.checkrequired === "true",
-    fetchOnVisible: (attrs.fetchOnVisible !== undefined && attrs.fetchOnVisible !== null) ? (attrs.fetchOnVisible === 'true') : true
+    fetchOnVisible: (attrs.fetchOnVisible !== undefined && attrs.fetchOnVisible !== null) ? (attrs.fetchOnVisible === 'true') : false
   }
 
   var firstLoad = {
@@ -339,10 +339,8 @@ angular.module('datasourcejs', [])
     if (this.fetchOnVisible) {
       this.parent.visibilityChanged({
           callback: function(element, visible, initialLoad) {
-            if (visible && this.lastVisibleFetch) {
-              var ftc = this.lastVisibleFetch;
-              this.lastVisibleFetch = null;
-              this.fetch(ftc.properties, ftc.callbacksObj, ftc.isNextOrPrev, ftc.fetchOptions, ftc.silent, true);
+            if (visible && this.holdServiceCall) {
+              this.holdServiceCall();
             }
           }.bind(this),
           runOnLoad: false,
@@ -3385,9 +3383,10 @@ angular.module('datasourcejs', [])
           } else {
             var value = executeRight(arg.right);
 
-            if (this.isEmpty(value) && (strategy == 'ignore' || strategy == 'clean')) {
+            if (this.isEmpty(value) && (strategy == 'ignore' || strategy == 'clean' || strategy == 'wait')) {
               if (resultData) {
                 resultData.clean = (strategy == 'clean');
+                resultData.wait = (strategy == 'wait');
               }
             } else {
               if (!this.isEmpty(value)) {
@@ -3479,48 +3478,37 @@ angular.module('datasourcejs', [])
       }
     }
 
+    this.isParentBusy = function() {
+      if (this.dependentLazyPost) {
+        return eval(this.dependentLazyPost).busy || eval(this.dependentLazyPost).isParentBusy();
+      }
+
+      return false;
+    }
+
     /**
      *  Fetch all data from the server
      */
 
     this.fetch = function(properties, callbacksObj, isNextOrPrev, fetchOptions, silent, fromVisibleEvent) {
 
-      if (this.busy || this.postingBatch) {
+      if (!fetchOptions) {
+        fetchOptions = {};
+      }
+
+      let busy = this.busy;
+      let masterDetail = this.parameters && this.parameters.length > 0;
+      if (fetchOptions.ignoreBusy) {
+        busy = false;
+      }
+      if (busy || this.postingBatch || (!masterDetail && this.isParentBusy())) {
         setTimeout(function() {
           this.fetch(properties, callbacksObj, isNextOrPrev, fetchOptions);
         }.bind(this), 1000);
         return;
       }
 
-      if (!fetchOptions) {
-        fetchOptions = {};
-      }
       var callbacks = callbacksObj || {};
-
-      if (this.fetchOnVisible && !this.parent.is(":visible")) {
-        if (this.lastVisibleFetch) {
-          var cb = this.lastVisibleFetch.callbacksObj || {};
-          if (cb.canceled) {
-            cb.canceled();
-          }
-        }
-
-        this.lastVisibleFetch = {
-          properties: properties,
-          callbacksObj: callbacksObj,
-          isNextOrPrev: isNextOrPrev,
-          fetchOptions: fetchOptions,
-          silent: silent
-        }
-
-        if (callbacks.canceled) {
-          callbacks.canceled();
-        }
-
-        return;
-      }
-
-      this.lastVisibleFetch = null;
 
       this.lastFetch = {
         properties: properties,
@@ -3803,6 +3791,7 @@ angular.module('datasourcejs', [])
       }
 
       var urlParams;
+      let waitData = false;
 
       if (this.condition) {
         try {
@@ -3827,6 +3816,9 @@ angular.module('datasourcejs', [])
 
             if (!cleanData && resultData.clean) {
               cleanData = true;
+            }
+            if (!cleanData && resultData.wait) {
+              waitData = true;
             }
             if (!cleanData && this.loadDataStrategy === "one" && (!resultData.count || resultData.count < 1)) {
               cleanData = true;
@@ -3907,8 +3899,12 @@ angular.module('datasourcejs', [])
       // Set Limit and offset
       if (this.rowsPerPage > 0) {
         if (this.isOData()) {
-          props.params.$top = this.rowsPerPage;
-          props.params.$skip = parseInt(this.offset) * parseInt(this.rowsPerPage);
+          if (props.params.$top === undefined || props.params.$top === null) {
+            props.params.$top = this.rowsPerPage;
+          }
+          if (props.params.$skip === undefined || props.params.$skip === null) {
+            props.params.$skip = parseInt(this.offset) * parseInt(this.rowsPerPage);
+          }
           props.params.$inlinecount = 'allpages';
         } else {
           if (this.apiVersion == 1 || resourceURL.indexOf('/cronapi/') == -1) {
@@ -4011,6 +4007,14 @@ angular.module('datasourcejs', [])
       // Store the last configuration for late use
       this._savedProps = props;
 
+      if (waitData) {
+        setTimeout(function() {
+          fetchOptions.ignoreBusy = true;
+          this.fetch(properties, callbacksObj, isNextOrPrev, fetchOptions);
+        }.bind(this), 100);
+        return;
+      }
+
       if (cleanData) {
         if (localSuccess) {
           localSuccess();
@@ -4031,27 +4035,36 @@ angular.module('datasourcejs', [])
         if (callbacks.error) callbacks.error.call(this, data);
       }.bind(this);
 
-      // Get an ajax promise
-      this.$promise = this.getService("GET")({
-        method: "GET",
-        url: this.removeSlash(resourceURL),
-        params: props.params,
-        headers: this.headers,
-        filter: filter
-      }).success(function(data, status, headers, config) {
-        if (localSuccess) {
-          localSuccess();
-        }
-        this.lastFilter = filter;
-        this.busy = false;
-        if (headers) {
-          sucessHandler(data, headers());
-        } else {
-          sucessHandler(data, null);
-        }
-      }.bind(this)).error(function(data, status, headers, config) {
-        httpError(data, status, headers, config);
-      }.bind(this));
+     let callService = function() {
+        // Get an ajax promise
+        this.$promise = this.getService("GET")({
+          method: "GET",
+          url: this.removeSlash(resourceURL),
+          params: props.params,
+          headers: this.headers,
+          filter: filter
+        }).success(function(data, status, headers, config) {
+          if (localSuccess) {
+            localSuccess();
+          }
+          this.lastFilter = filter;
+          this.busy = false;
+          if (headers) {
+            sucessHandler(data, headers());
+          } else {
+            sucessHandler(data, null);
+          }
+        }.bind(this)).error(function(data, status, headers, config) {
+          httpError(data, status, headers, config);
+        }.bind(this));
+     }.bind(this);
+
+      if (this.fetchOnVisible && !this.parent.is(":visible")) {
+        this.holdServiceCall = callService;
+      } else {
+        this.holdServiceCall = undefined;
+        callService();
+      }
 
 
     };
