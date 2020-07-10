@@ -1473,16 +1473,18 @@ angular.module('datasourcejs', [])
         if (forId.length > 0) {
           label = forId.text();
         }
-
-        Notification.error(message.replace("{0}", label));
-        $(selection.get(0)).addClass("ng-touched").removeClass("ng-untouched");
-        if (selection.get(0).focus) {
-          selection.get(0).focus();
+  
+        if (message) {
+          Notification.error(message.replace("{0}", label));
+          $(selection.get(0)).addClass("ng-touched").removeClass("ng-untouched");
+          if (selection.get(0).focus) {
+            selection.get(0).focus();
+          }
         }
         return false;
       }
       return true;
-    }
+    };
 
     /**
      * Always valid if input has pattern
@@ -1497,14 +1499,14 @@ angular.module('datasourcejs', [])
     /**
      * Valid if required field is valid
      */
-    this.missingRequiredField = function() {
+    this.missingRequiredField = function(silent) {
       if(this.getPatterns().length > 0){
         return false;
       }
       if (this.checkRequired) {
-        var valid = this.validateFields('[required][ng-model*="' + this.name + '."].ng-invalid-required', this.translate.instant("FieldIsRequired"));
-        valid = valid && this.validateFields('[required][ng-model*="' + this.name + '."].ng-empty', this.translate.instant("FieldIsRequired"));
-        valid = valid && this.validateFields('[ng-model*="' + this.name + '."].ng-invalid', this.translate.instant("FieldIsInvalid"));
+        var valid = this.validateFields('[required][ng-model*="' + this.name + '."].ng-invalid-required', !silent ? this.translate.instant("FieldIsRequired") : "");
+        valid = valid && this.validateFields('[required][ng-model*="' + this.name + '."].ng-empty', !silent ? this.translate.instant("FieldIsRequired") : "");
+        valid = valid && this.validateFields('[ng-model*="' + this.name + '."].ng-invalid', !silent ? this.translate.instant("FieldIsInvalid") : "");
 
         return !valid;
       } else {
