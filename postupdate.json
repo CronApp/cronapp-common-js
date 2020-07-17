@@ -44,6 +44,21 @@
     },
     {
       "file": "index.html",
+      "script": "plugins/cronapp-framework-mobile-js/dist/components/js/datasource.js",
+      "type": "script"
+    },
+    {
+      "file": "index.html",
+      "script": "plugins/cronapp-framework-js/dist/components/js/datasource.js",
+      "type": "script"
+    },
+    {
+      "file": "index.html",
+      "script": "plugins/cronapp-common-js/dist/parser.min.js",
+      "type": "script"
+    },
+    {
+      "file": "index.html",
       "script": "plugins/cronapp-common-js/dist/js/parser.js",
       "type": "script"
     },
