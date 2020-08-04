@@ -1473,7 +1473,7 @@ angular.module('datasourcejs', [])
         if (forId.length > 0) {
           label = forId.text();
         }
-  
+
         if (message) {
           Notification.error(message.replace("{0}", label));
           $(selection.get(0)).addClass("ng-touched").removeClass("ng-untouched");
@@ -1905,6 +1905,44 @@ angular.module('datasourcejs', [])
       }
     }
 
+    this.getConditionParams = function() {
+      if (this.condition) {
+        try {
+          var parsedCondition = this.$interpolate(this.conditionExpression)(this.$scope);
+
+          var obj = JSON.parse(parsedCondition);
+          if (typeof obj === 'object') {
+            var resultData = {};
+
+            if (obj.params) {
+              let params;
+              for (var i=0;i<obj.params.length;i++) {
+                var value = obj.params[i].fieldValue;
+
+                if (value.length >= 2 && value.charAt(0) == "'" && value.charAt(value.length-1) == "'") {
+                  value = value.substring(1, value.length-1);
+                }
+
+                if (value !== '' && value !== undefined && value !== null) {
+                  if (params) {
+                    params += "&";
+                  } else {
+                    params = "";
+                  }
+                  params += obj.params[i].fieldName +"="+ encodeURIComponent(value);
+                }
+              }
+
+              return params;
+            }
+          }
+        } catch (e) {
+          console.log(e);
+        }
+      }
+
+    }
+
     this.getDeletionURL = function(obj, forceOriginalKeys) {
       var keyObj = this.getKeyValues(obj.__original?obj.__original:obj, forceOriginalKeys);
 
@@ -1936,7 +1974,14 @@ angular.module('datasourcejs', [])
         url = url.substring(0, url.length-1);
       }
 
-      return url + suffixPath;
+      url =  url + suffixPath;
+
+      let params = this.getConditionParams();
+      if (params) {
+        url = url + "?" + params;
+      }
+
+      return url;
     }
 
     this.getEditionURL = function(obj, forceOriginalKeys) {
@@ -1965,7 +2010,14 @@ angular.module('datasourcejs', [])
         url = url.substring(0, url.length-1);
       }
 
-      return url + suffixPath;
+      url =  url + suffixPath;
+
+      let params = this.getConditionParams();
+      if (params) {
+        url = url + "?" + params;
+      }
+
+      return url;
     }
 
 
