@@ -1467,7 +1467,7 @@ angular.module('datasourcejs', [])
 
     this.validateFields = function(expression, message) {
       var selection = $(expression);
-      if (selection.length > 0) {
+      if (selection.length > 0 && selection.get(0).type !== 'checkbox') {
         var forId = $('label[for="'+selection.get(0).id+'"]');
         var label = selection.get(0).id
         if (forId.length > 0) {
