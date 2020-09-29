@@ -1,30 +1,5 @@
 {
   "includes": [
-    {
-      "file": "index.html",
-      "script": "node_modules/cronapp-common-js/dist/js/parser.js",
-      "type": "script"
-    },
-    {
-      "file": "index.html",
-      "script": "node_modules/cronapp-common-js/dist/js/datasource/datasource.js",
-      "type": "script"
-    },
-    {
-      "file": "index.html",
-      "script": "node_modules/cronapp-common-js/dist/js/odata-filter-parser.js",
-      "type": "script"
-    },
-    {
-      "file": "index.html",
-      "script": "node_modules/cronapp-common-js/dist/js/pouchdb.min.js",
-      "type": "script"
-    },
-    {
-      "file": "index.html",
-      "script": "node_modules/cronapp-common-js/dist/js/pouchdb.find.min.js",
-      "type": "script"
-    }
   ],
   "removes": [
     {
@@ -56,31 +31,28 @@
       "file": "index.html",
       "script": "plugins/cronapp-common-js/dist/parser.min.js",
       "type": "script"
+    }
+  ],
+  "replaces":[
+    {
+      "old": "plugins/cronapp-common-js/dist/js/parser.js",
+      "new": "node_modules/cronapp-common-js/dist/js/parser.js"
     },
     {
-      "file": "index.html",
-      "script": "plugins/cronapp-common-js/dist/js/parser.js",
-      "type": "script"
+      "old": "plugins/cronapp-common-js/dist/js/datasource/datasource.js",
+      "new": "node_modules/cronapp-common-js/dist/js/datasource/datasource.js"
     },
     {
-      "file": "index.html",
-      "script": "plugins/cronapp-common-js/dist/js/datasource/datasource.js",
-      "type": "script"
+      "old": "plugins/cronapp-common-js/dist/js/odata-filter-parser.js",
+      "new": "node_modules/cronapp-common-js/dist/js/odata-filter-parser.js"
     },
     {
-      "file": "index.html",
-      "script": "plugins/cronapp-common-js/dist/js/odata-filter-parser.js",
-      "type": "script"
+      "old": "plugins/cronapp-common-js/dist/js/pouchdb.min.js",
+      "new": "node_modules/cronapp-common-js/dist/js/pouchdb.min.js"
     },
     {
-      "file": "index.html",
-      "script": "plugins/cronapp-common-js/dist/js/pouchdb.min.js",
-      "type": "script"
-    },
-    {
-      "file": "index.html",
-      "script": "plugins/cronapp-common-js/dist/js/pouchdb.find.min.js",
-      "type": "script"
+      "old": "plugins/cronapp-common-js/dist/js/pouchdb.find.min.js",
+      "new": "node_modules/cronapp-common-js/dist/js/pouchdb.find.min.js"
     }
   ]
 }
