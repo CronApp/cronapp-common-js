@@ -816,8 +816,17 @@ angular.module('datasourcejs', [])
         }
       }
 
-      this.handleBeforeCallBack = function(callBackFunction, callback) {
+      this.onMatchRegex = (regex, run, complete) => {
+        return (callbackFunction) => {
+          let result = regex.exec(callbackFunction);
+          if (result && result.length) return callbackFunction.split(run).join(complete + run);
+          return callbackFunction;
+        }
+      };
+
+      this.handleBeforeCallBack = async function(callBackFunction, callback) {
         var isValid = true;
+        let toPromise = this.onMatchRegex(/cronapi.server/g, '.run(', '.toPromise().disableNotification()');
         if (callBackFunction) {
           try {
             var contextVars = {
@@ -832,7 +841,7 @@ angular.module('datasourcejs', [])
               'callback': callback
             };
 
-            this.$scope.$eval(callBackFunction, contextVars);
+            await this.$scope.$eval(toPromise(callBackFunction), contextVars);
           } catch (e) {
             isValid = false;
             this.handleError(e);
@@ -1029,8 +1038,8 @@ angular.module('datasourcejs', [])
     /**
      * Append a new value to the end of this dataset.
      */
-    this.insert = function(obj, onSuccess, onError, forceSave) {
-      if (this.handleBeforeCallBack(this.onBeforeCreate)) {
+    this.insert = async function(obj, onSuccess, onError, forceSave) {
+      if (await this.handleBeforeCallBack(this.onBeforeCreate)) {
         //Check if contains dependentBy, if contains, only store in data TRM
         if ((this.dependentLazyPost || this.batchPost) && !forceSave) {
           obj.__status = 'inserted';
@@ -1453,9 +1462,9 @@ angular.module('datasourcejs', [])
     /**
      * Uptade a value into this dataset by using the dataset key to compare the objects.
      */
-    this.update = function(obj, onSuccess, onError, forceUpdate) {
+    this.update = async function(obj, onSuccess, onError, forceUpdate) {
 
-      if (this.handleBeforeCallBack(this.onBeforeUpdate)) {
+      if (await this.handleBeforeCallBack(this.onBeforeUpdate)) {
         if ((this.dependentLazyPost || this.batchPost) && !forceUpdate) {
           if (onSuccess)
             onSuccess(obj);
@@ -2409,7 +2418,7 @@ angular.module('datasourcejs', [])
 
       this.busy = true;
 
-      var _remove = function(object, callback) {
+      var _remove = async function(object, callback) {
         if (!object) {
           object = this.active;
         }
@@ -2500,7 +2509,7 @@ angular.module('datasourcejs', [])
           }
         }.bind(this)
 
-        if (this.handleBeforeCallBack(this.onBeforeDelete)) {
+        if (await this.handleBeforeCallBack(this.onBeforeDelete)) {
           if ((this.dependentLazyPost || this.batchPost) && !forceDelete) {
             callback();
           } else {
