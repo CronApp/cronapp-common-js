@@ -433,8 +433,8 @@ angular.module('datasourcejs', [])
         update: function(url, object) {
           return this.call(url, "PUT", object, false);
         },
-        remove: function(url) {
-          return this.call(url, "DELETE", null, true);
+        remove: function(url, object) {
+          return this.call(url, "DELETE", object, true);
         },
         call: function(url, verb, obj, applyScope) {
           var object = {};
@@ -489,28 +489,21 @@ angular.module('datasourcejs', [])
             }
           }
 
-          // Get an ajax promise
-          this.$promise = _self.getService(verb)({
-            method: verb,
-            url: _self.removeSlash(((window.hostApp || "") + url)),
-            data: (object) ? JSON.stringify(cloneObject) : null,
-            headers: _self.headers,
-            rawData: (object) ? cloneObject : null
-          }).success(function(data, status, headers, config) {
+          var success = function(data, status, headers, config, batchPosponed) {
             _self.busy = false;
             if (_callback) {
               if (_self.isOData()) {
                 if (data.d != null && data.d.result != null) {
                   _self.normalizeData(data.d.result);
-                  _callback(data.d.result, true);
+                  _callback(data.d.result, true, batchPosponed);
                 } else if (data.d != null) {
                   _self.normalizeObject(data.d);
-                  _callback(data.d, true);
+                  _callback(data.d, true, batchPosponed);
                 } else {
-                  _callback(data, true);
+                  _callback(data, true, batchPosponed);
                 }
               } else {
-                _callback(isCronapiQuery?data.value:data, true);
+                _callback(isCronapiQuery?data.value:data, true, batchPosponed);
               }
             }
             if (isCronapiQuery || _self.isOData()) {
@@ -522,26 +515,49 @@ angular.module('datasourcejs', [])
               }
               _self.$scope.cronapi.evalInContext(JSON.stringify(commands));
             }
-          }).error(function(data, status, headers, config) {
-            _self.busy = false;
-            var msg;
-            if (_self.isOData()) {
-              msg = data.error.message.value;
-            } else {
-              msg = isCronapiQuery&&data.value?data.value:data
-            }
-            _self.handleError(msg);
-            if (_callbackError) {
-              _callbackError(msg);
-            }
-          });
+          };
 
-          this.$promise.then = function(callback) {
+          var ds = _self.dependentLazyPost ? eval(_self.dependentLazyPost) : _self;
+          let batchObj = ds.getBatchDataItem(object);
+          if (batchObj && batchObj.result) {
+            let idx = ds.batchServiceData.indexOf(batchObj);
+            ds.batchServiceData.splice(idx, 1);
+            $timeout(() => {
+              success(batchObj.result);
+            },0);
+
+            this.$promise = {};
+          } else {
+            // Get an ajax promise
+            this.$promise = _self.getService(verb, object)({
+              method: verb,
+              url: _self.removeSlash(((window.hostApp || "") + url)),
+              data: verb!='DELETE'?((object) ? JSON.stringify(cloneObject) : null):null,
+              headers: _self.headers,
+              rawData: (object) ? cloneObject : null,
+              originalObject: (object) ? object : null,
+              urlPart: url
+            }).success(success).error(function (data, status, headers, config) {
+              _self.busy = false;
+              var msg;
+              if (_self.isOData()) {
+                msg = data.error.message.value;
+              } else {
+                msg = isCronapiQuery && data.value ? data.value : data
+              }
+              _self.handleError(msg);
+              if (_callbackError) {
+                _callbackError(msg);
+              }
+            });
+          }
+
+          this.$promise.then = function (callback) {
             _callback = callback;
             return this;
           }
 
-          this.$promise.error = function(callback) {
+          this.$promise.error = function (callback) {
             _callbackError = callback;
             return this;
           }
@@ -648,6 +664,160 @@ angular.module('datasourcejs', [])
 
       }
 
+      this.batchServiceData = [];
+
+      this.getBatchService = function(verb) {
+        return function(properties) {
+          var promise = {
+            verb: verb,
+            properties: properties,
+            successCallback: null,
+            errorCallback: null,
+            success: function (successCallback) {
+              this.successCallback = successCallback;
+              return this;
+            },
+
+            error: function (errorCallback) {
+              this.errorCallback = errorCallback;
+              return this;
+            }
+          };
+
+          $timeout(function() {
+            var ds = this.dependentLazyPost ? eval(this.dependentLazyPost) : this;
+            let obj = properties.originalObject || properties.rawData || properties.data || this.active
+
+            let entity = this.entity;
+
+            if (verb == 'PUT') {
+              entity = this.getEditionURL(obj);
+            }
+
+            if (verb == 'DELETE') {
+              entity = this.getDeletionURL(obj);
+            }
+
+            if (entity.indexOf("/") > 0) {
+              entity = entity.substring(entity.lastIndexOf("/")+1, entity.length);
+            }
+
+            ds.batchServiceData.push({
+              entity: entity,
+              data: obj,
+              promise: promise
+            });
+
+            if (promise.successCallback) {
+              promise.successCallback.call(this, obj, null, null, null, true);
+            }
+          }.bind(this));
+
+          return promise;
+        }.bind(this);
+      }
+
+      this.batchEnabled = function(obj) {
+        if (obj && this.hasPendingChanges()) {
+          return this.getBatchDataItem(obj) != null ? false : true;
+        }
+
+        return false;
+      }
+
+      this.getBatchDataItem = function(obj) {
+        if (obj) {
+          var ds = this.dependentLazyPost ? eval(this.dependentLazyPost) : this;
+          for (let i = 0; i < ds.batchServiceData.length; i++) {
+            let data = ds.batchServiceData[i].data;
+            if (data.__$id == obj.__$id) {
+              return ds.batchServiceData[i];
+            }
+          }
+        }
+
+        return null;
+      }
+
+      this.performBatchPost = function() {
+        let boundary = "batch_" + this.uuidv4();
+        let odataPost = "";
+
+        odataPost += "--" + boundary + "\n";
+        let changeSet = "changeset_" + this.uuidv4();
+        odataPost += "Content-Type: multipart/mixed; boundary="+changeSet+"\n";
+
+        for (let i = 0; i<this.batchServiceData.length;i++) {
+          let batchData = this.batchServiceData[i];
+
+          odataPost += "--" + changeSet + "\n";
+
+          odataPost += "Content-Type: application/http\n";
+          odataPost += "Content-Transfer-Encoding:binary\n";
+
+          odataPost +=  batchData.promise.properties.method + " " + batchData.entity + " HTTP/1.1\n";
+          odataPost += "Content-Type: application/json\n";
+          odataPost += "Accept: application/json\n";
+
+          let headers = batchData.promise.properties.headers;
+          for (var key in headers) {
+            if (headers.hasOwnProperty(key)) {
+              odataPost += key + ": "+headers[key]+"\n";
+            }
+          }
+
+          if (batchData.promise.properties.method != 'DELETE') {
+            odataPost += batchData.promise.properties.data + "\n";
+          }
+
+        }
+
+        odataPost += "--" + changeSet + "--\n";
+        odataPost += "--" + boundary + "--\n";
+        console.log(odataPost);
+
+        let url = this.entity;
+        if (url.indexOf("/") > 0) {
+          url = url.substring(0, url.lastIndexOf("/"));
+        }
+
+        let headers = {};
+
+        this.copy(this.headers, headers);
+        headers["Content-Type"] = "multipart/mixed; boundary="+boundary;
+        $http({
+          method: "POST",
+          url: _self.removeSlash(((window.hostApp || "") + url + "/$batch")),
+          data: odataPost,
+          headers: headers,
+        }).success(function(data, status, headers, config, batchPosponed) {
+          let result = this.parseBatchResult(data);
+          for (let i = 0; i<this.batchServiceData.length;i++) {
+            this.batchServiceData[i].result = result[i]==null?this.batchServiceData[i].data:result[i];
+          }
+          this.post();
+        }.bind(this)).error(function(data, status, headers, config) {
+          console.log(data);
+        }.bind(this));
+      }
+
+      this.parseBatchResult = function(data) {
+        let results = [];
+        let lines = data.split("\n");
+        for (let j=0;j<lines.length;j++) {
+          let line = lines[j];
+          if (line.startsWith("{")) {
+            results.push(JSON.parse(line));
+          }
+
+          if (line.startsWith("HTTP/1.1") && line.indexOf("No Content") > 0) {
+            results.push(null);
+          }
+        }
+
+        return results;
+      }
+
       this.uuidv4 = function() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
           var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -655,7 +825,7 @@ angular.module('datasourcejs', [])
         });
       }
 
-      this.getService = function(verb) {
+      this.getService = function(verb, object) {
         _self = this;
         var event = eval("this.on"+verb);
 
@@ -772,6 +942,9 @@ angular.module('datasourcejs', [])
 
         }
 
+        if (this.batchEnabled(object) && verb != 'GET') {
+          return this.getBatchService(verb);
+        }
         return $http;
       }
 
@@ -1156,7 +1329,7 @@ angular.module('datasourcejs', [])
       }
     }
 
-    this.flushDependencies = function(callback) {
+    this.flushDependencies = function(callback, batchPostponed) {
       if (this.dependentData) {
 
         var ins = function() {
@@ -1164,7 +1337,7 @@ angular.module('datasourcejs', [])
           reduce(this.dependentData, function (item, resolve) {
             item.storeDependentBuffer(function () {
               resolve();
-            });
+            }, undefined, batchPostponed);
           }.bind(this), function () {
             if (callback) {
               callback();
@@ -1176,7 +1349,7 @@ angular.module('datasourcejs', [])
         reduce(reverseArr(this.dependentData), function (item, resolve) {
           item.storeDependentBuffer(function () {
             resolve();
-          }, true);
+          }, true, batchPostponed);
         }.bind(this), function () {
           ins();
         }.bind(this))
@@ -1239,7 +1412,7 @@ angular.module('datasourcejs', [])
       }
     }
 
-    this.storeDependentBuffer = function(callback, onlyRemove) {
+    this.storeDependentBuffer = function(callback, onlyRemove, batchMode) {
       var _self = this;
       var dependentDS = eval(_self.dependentLazyPost);
 
@@ -1304,7 +1477,11 @@ angular.module('datasourcejs', [])
           if (item.__status == "inserted") {
             (function (oldObj) {
               var odataFiles = _self.processODataFiles(oldObj);
-              _self.insert(oldObj, function (newObj) {
+              _self.insert(oldObj, function (newObj, hotData, batchPosponed) {
+                if (batchPosponed) {
+                  resolve();
+                  return;
+                }
                 var sender = oldObj.__sender;
                 var idx = _self.getIndexOfListTempBuffer(oldObj, array);
                 var isFromMemory = false;
@@ -1341,7 +1518,11 @@ angular.module('datasourcejs', [])
           else if (item.__status == "updated") {
             (function (oldObj) {
               var odataFiles = _self.processODataFiles(oldObj);
-              _self.update(oldObj, function (newObj) {
+              _self.update(oldObj, function (newObj, hotData, batchPosponed) {
+                if (batchPosponed) {
+                  resolve();
+                  return;
+                }
                 var sender = oldObj.__sender;
                 var idx = _self.getIndexOfListTempBuffer(oldObj, array);
                 var isFromMemory = false;
@@ -1374,9 +1555,13 @@ angular.module('datasourcejs', [])
             })(item);
           }
 
-          else if (item.__status == "deleted") {
+          else if (item.__status == "deleted" && onlyRemove) {
             (function (oldObj) {
-              _self.remove(oldObj, function () {
+              _self.remove(oldObj, function (newObj, hotData, batchPosponed) {
+                if (batchPosponed) {
+                  resolve();
+                  return;
+                }
                 if (_self.events.delete) {
                   var param = {};
                   _self.copy(oldObj, param);
@@ -1408,7 +1593,7 @@ angular.module('datasourcejs', [])
           this.hasMemoryData = false;
           this.memoryData = null;
           this.notifyPendingChanges(this.hasMemoryData);
-          if (this.events.afterchanges) {
+          if (this.events.afterchanges && !batchMode) {
             this.callDataSourceEvents('afterchanges', this.data);
           }
         }
@@ -1418,7 +1603,9 @@ angular.module('datasourcejs', [])
         if (callback) {
           callback();
         }
-        this.postDeleteData = null;
+        if (!batchMode) {
+          this.postDeleteData = null;
+        }
       }.bind(this));
 
       return resetFunc;
@@ -1680,7 +1867,16 @@ angular.module('datasourcejs', [])
 
       if (this.inserting) {
         // Make a new request to persist the new item
-        this.insert(this.active, function(obj, hotData) {
+        this.insert(this.active, function(obj, hotData, batchPostponed) {
+          if (batchPostponed) {
+            if (this.dependentData && !this.dependentLazyPost && !this.batchPost) {
+              this.flushDependencies(() => {
+                this.performBatchPost();
+              });
+
+              return;
+            }
+          }
           // In case of success add the new inserted value at
           // the end of the array
 
@@ -1742,8 +1938,16 @@ angular.module('datasourcejs', [])
 
       } else if (this.editing) {
         // Make a new request to update the modified item
-        this.update(this.active, function(obj, hotData) {
+        this.update(this.active, function(obj, hotData, batchPostponed) {
+          if (batchPostponed) {
+            if (this.dependentData && !this.dependentLazyPost && !this.batchPost) {
+              this.flushDependencies(() => {
+                this.performBatchPost();
+              }, batchPostponed);
 
+              return;
+            }
+          }
           var odataFiles;
 
           if (hotData) {
@@ -2425,7 +2629,10 @@ angular.module('datasourcejs', [])
 
         var keyObj = this.getKeyValues(object, forceDelete);
 
-        callback = callback || function(empty, hotData) {
+        callback = callback || function(empty, hotData, batchPostponed) {
+          if (batchPostponed) {
+            return;
+          }
           // For each row data
           for (var i = 0; i < this.data.length; i++) {
             // current object match with the same
@@ -2513,7 +2720,7 @@ angular.module('datasourcejs', [])
           if ((this.dependentLazyPost || this.batchPost) && !forceDelete) {
             callback();
           } else {
-            service.remove(this.getDeletionURL(object, forceDelete)).$promise.error(onError).then(callback);
+            service.remove(this.getDeletionURL(object, forceDelete), object).$promise.error(onError).then(callback);
           }
         }
       }.bind(this);
