@@ -760,6 +760,10 @@ angular.module('datasourcejs', [])
             odataPost += batchData.promise.properties.method + " " + batchData.entity + " HTTP/1.1\n";
             odataPost += "Content-Type: application/json\n";
             odataPost += "Accept: application/json\n";
+            odataPost += "X-Master-Id: "+batchData.promise.properties.originalObject.__$id+"\n";
+            if (batchData.promise.properties.originalObject.__$masterExpression) {
+              odataPost += "X-Detail-Fill: " + batchData.promise.properties.originalObject.__$masterExpression + "\n";
+            }
 
             let headers = batchData.promise.properties.headers;
             for (var key in headers) {
@@ -1534,12 +1538,15 @@ angular.module('datasourcejs', [])
           }
 
           if (_self.parameters) {
-            var params = _self.getParametersMap(item.__parentId?item.__parentId:null);
+            var params = _self.getParametersMap(item.__parentId ? item.__parentId : null);
             for (var key in params) {
               if (params.hasOwnProperty(key)) {
                 updateObjectValue(item, key, params[key]);
               }
             }
+
+            let masterExpression = _self.getParametersBatchExpression(item.__parentId ? item.__parentId : null);
+            item.__$masterExpression = masterExpression;
           }
 
           if (item.__status == "inserted") {
@@ -3389,6 +3396,53 @@ angular.module('datasourcejs', [])
       this.fetch({
         params: {}
       });
+    }
+
+    this.getParametersBatchExpression = function(parentId) {
+      var expression = "";
+
+      var parameters;
+
+      var obj;
+
+      parameters = this.parametersExpression;
+      var arr = eval(this.dependentLazyPost).getAllData();
+
+      if (eval(this.dependentLazyPost).active.__$id == parentId) {
+        obj = eval(this.dependentLazyPost).active;
+      } else {
+        for (var i = 0; i < arr.length; i++) {
+          if (arr[i].__$id == parentId) {
+            obj = arr[i];
+            break;
+          }
+        }
+      }
+
+      if (parameters && parameters.length > 0) {
+        var parts = parameters.split(";")
+        for (var i=0;i<parts.length;i++) {
+          var part = parts[i];
+          var binary = part.split("=");
+          if (binary.length == 2) {
+            var value = binary[1];
+            if (binary[1].match(DEP_PATTERN)) {
+              var g = DEP_PATTERN.exec(value);
+              if (g[1].indexOf(".active.") != -1) {
+                var field = g[1].replace(this.dependentLazyPost + ".active.", "");
+                if (obj) {
+                  if (expression != '') {
+                    expression += ",";
+                  }
+                  expression = binary[0] + ":" + "$"+parentId+"."+field;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return expression;
     }
 
     this.removeSlash = function(u) {
