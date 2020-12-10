@@ -1939,7 +1939,9 @@ angular.module('datasourcejs', [])
           if (batchPostponed) {
             if (this.dependentData && !this.dependentLazyPost && !this.batchPost) {
               this.flushDependencies(() => {
-                this.performBatchPost();
+                this.performBatchPost(() => {
+                  this.post(onSuccess, onError, silent);
+                });
               }, true);
 
               return;
@@ -2010,7 +2012,9 @@ angular.module('datasourcejs', [])
           if (batchPostponed) {
             if (this.dependentData && !this.dependentLazyPost && !this.batchPost) {
               this.flushDependencies(() => {
-                this.performBatchPost();
+                this.performBatchPost(() => {
+                  this.post(onSuccess, onError, silent);
+                });
               }, batchPostponed);
 
               return;
