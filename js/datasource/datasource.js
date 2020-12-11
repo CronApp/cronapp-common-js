@@ -1578,7 +1578,10 @@ angular.module('datasourcejs', [])
 
           if (item.__status == "inserted") {
             (function (oldObj) {
-              var odataFiles = _self.processODataFiles(oldObj);
+              var odataFiles;
+              if (!batchMode) {
+                odataFiles = _self.processODataFiles(oldObj);
+              }
               _self.insert(oldObj, function (newObj, hotData, batchPostponed) {
                 if (batchPostponed) {
                   resolve();
@@ -1604,7 +1607,7 @@ angular.module('datasourcejs', [])
 
                 if (odataFiles && odataFiles.length > 0) {
                   _self.sendODataFiles(odataFiles, newObj, function (result) {
-                    this.copy(result.data, currentObj);
+                    _self.copy(result.data, currentObj);
                   }.bind(this), function() {
                     resolve();
                   });
@@ -1619,7 +1622,10 @@ angular.module('datasourcejs', [])
 
           else if (item.__status == "updated") {
             (function (oldObj) {
-              var odataFiles = _self.processODataFiles(oldObj);
+              var odataFiles;
+              if (!batchMode) {
+                odataFiles = _self.processODataFiles(oldObj);
+              }
               _self.update(oldObj, function (newObj, hotData, batchPostponed) {
                 if (batchPostponed) {
                   resolve();
@@ -1644,7 +1650,7 @@ angular.module('datasourcejs', [])
                 }
                 if (odataFiles && odataFiles.length > 0) {
                   _self.sendODataFiles(odataFiles, newObj, function (result) {
-                    this.copy(result.data, currentObj);
+                    _self.copy(result.data, currentObj);
                   }.bind(this), function() {
                     resolve();
                   });
