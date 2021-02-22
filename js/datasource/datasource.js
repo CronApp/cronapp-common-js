@@ -1531,7 +1531,7 @@ angular.module('datasourcejs', [])
         return false;
       }
       if (this.checkRequired) {
-        return $('input[ng-model*="' + this.name + '."]:invalid').not('.ng-empty').size() > 0;
+        return $('input[ng-model*="' + this.name + '."]:invalid').not('.ng-empty').length > 0;
       } else {
         return false;
       }
