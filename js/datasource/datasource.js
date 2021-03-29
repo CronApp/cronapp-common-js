@@ -2197,6 +2197,10 @@ angular.module('datasourcejs', [])
         this.busy = false;
         this.editing = false;
         this.inserting = false;
+
+        let childrensDs = this.dependentData && this.dependentData.filter( ds => ds.inserting || ds.editing );
+        !childrensDs || childrensDs.forEach( ds => ds.cancel() );
+
         this.changeTitle();
       }.bind(this))
     };
