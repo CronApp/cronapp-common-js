@@ -208,6 +208,24 @@ var initDatasource = function(scope, element, attrs, DatasetManager, $timeout, $
     });
   }
 
+  let calculate = {
+    lastCondition: undefined,
+    timeForCondition: undefined,
+    typingSpeedLimit: 1000,
+    maxWaitingValue: 1000,
+    wait: function() {
+      this.timeForCondition = 0;
+      if (this.lastCondition) {
+        let elapsedTime = new Date().getTime() - this.lastCondition.getTime();
+        if (elapsedTime < this.typingSpeedLimit) {
+          this.timeForCondition = this.maxWaitingValue;
+        }
+      }
+      this.lastCondition = new Date();
+      return this.timeForCondition;
+    }
+  };
+
   attrs.$observe('condition', function(value) {
     if (datasource.isPostingBatchData()) {
       return;
@@ -237,7 +255,7 @@ var initDatasource = function(scope, element, attrs, DatasetManager, $timeout, $
             }
           });
         }
-      }, 0);
+      }, calculate.wait());
 
     }
   });
