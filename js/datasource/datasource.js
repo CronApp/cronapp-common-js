@@ -2119,8 +2119,8 @@ angular.module('datasourcejs', [])
       }
     };
 
-    this.buildURL = function(keyValues) {
-      var keyObj = this.getKeyValues(this.active);
+    this.buildURL = function(keyValues, useKeys) {
+      var keyObj = this.getKeyValues(this.active, false, useKeys);
       if (typeof keyValues !== 'object') {
         keyValues = [keyValues];
       }
@@ -2149,9 +2149,9 @@ angular.module('datasourcejs', [])
       return params;
     }
 
-    this.findObj = function(keyObj, multiple, onSuccess, onError) {
+    this.findObj = function(keyObj, multiple, onSuccess, onError, useKeys) {
 
-      var keys = this.keys;
+      var keys = useKeys || this.keys;
 
       for (var i = 0; i < this.data.length; i++) {
 
@@ -2173,7 +2173,7 @@ angular.module('datasourcejs', [])
       }
 
 
-      var terms = this.buildURL(keyObj);
+      var terms = this.buildURL(keyObj, useKeys);
 
       var filterData;
 
@@ -2555,12 +2555,12 @@ angular.module('datasourcejs', [])
      * Get the object keys values from the datasource keylist
      * PRIVATE FUNCTION
      */
-    this.getKeyValues = function(rowData, forceOriginalKeys) {
-      var keys = this.keys;
+    this.getKeyValues = function(rowData, forceOriginalKeys, useKeys) {
+      var keys = useKeys || this.keys;
 
       var keyValues = {};
-      for (var i = 0; i < this.keys.length; i++) {
-        var key = this.keys[i];
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
         var rowKey = null;
         try {
           rowKey = eval("rowData."+key);
