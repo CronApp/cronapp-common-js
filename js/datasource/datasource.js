@@ -2687,6 +2687,9 @@ angular.module('datasourcejs', [])
       } else {
         this.offset = parseInt(this.offset) + 1;
       }
+      if (this._savedProps && this._savedProps.params) {
+        delete this._savedProps.params.$skip;
+      }
       this.fetch(this._savedProps, {
         success: function(data) {
           if (!data || data.length < parseInt(this.rowsPerPage)) {
@@ -2718,7 +2721,9 @@ angular.module('datasourcejs', [])
     this.prevPage = function() {
       if (!this.append && !this.preppend) {
         this.offset = parseInt(this.offset) - this.data.length;
-
+        if (this._savedProps && this._savedProps.params) {
+          delete this._savedProps.params.$skip;
+        }
         if (this.offset < 0) {
           this.offset = 0;
         } else if (this.offset >= 0) {
