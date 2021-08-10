@@ -79,6 +79,7 @@ var initDatasource = function(scope, element, attrs, DatasetManager, $timeout, $
     onAfterUpdate: attrs.onAfterUpdate,
     onBeforeDelete: attrs.onBeforeDelete,
     onAfterDelete: attrs.onAfterDelete,
+    onChangeStatus: attrs.onChangeStatus,
     onGet: attrs.onGet,
     onPost: attrs.onPost,
     onPut: attrs.onPut,
@@ -2553,7 +2554,7 @@ angular.module('datasourcejs', [])
         let childrensDs = this.dependentData && this.dependentData.filter( ds => ds.inserting || ds.editing );
         !childrensDs || childrensDs.forEach( ds => ds.cancel() );
 
-        this.changeTitle();
+        this.noticeStatusChange();
       }.bind(this))
     };
 
@@ -2691,6 +2692,11 @@ angular.module('datasourcejs', [])
 
     };
 
+    this.noticeStatusChange = function() {
+      this.changeTitle();
+      this.handleBeforeCallBack(this.onChangeStatus);
+    };
+
     this.changeTitle = function() {
       if (!$('#starter').length || $('#starter').attr('primary-datasource') !== this.name) {
         return;
@@ -2743,7 +2749,7 @@ angular.module('datasourcejs', [])
         }
 
         this.resetFieldsStatus();
-        this.changeTitle();
+        this.noticeStatusChange();
 
       }.bind(this));
     };
@@ -2771,7 +2777,7 @@ angular.module('datasourcejs', [])
         this.callDataSourceEvents('updating', this.active);
       }
       this.resetFieldsStatus();
-      this.changeTitle();
+      this.noticeStatusChange();
     };
 
     this.removeSilent = function(object, onSuccess, onError) {
@@ -4808,6 +4814,7 @@ angular.module('datasourcejs', [])
         dts.onAfterUpdate = props.onAfterUpdate;
         dts.onBeforeDelete = props.onBeforeDelete;
         dts.onAfterDelete = props.onAfterDelete;
+        dts.onChangeStatus = props.onChangeStatus;
         dts.onGET = props.onGet,
         dts.onPOST = props.onPost,
         dts.onPUT = props.onPut,
