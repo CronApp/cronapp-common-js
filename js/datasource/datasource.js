@@ -343,23 +343,6 @@ angular.module('datasourcejs', [])
   // Global dataset List
   this.datasets = {};
 
-  const $httpLegacy = (config) => {
-    let http = $http(config);
-    return {
-      success: function (thenCallback) {
-        http.then(response => {
-          thenCallback(response.data, response.status, response.headers, response.config);
-        });
-        return this;
-      },
-      error: function (catchCallback) {
-        http.catch(response => {
-          catchCallback(response.data, response.status, response.headers, response.config);
-        });
-        return this;
-      }
-    }
-  };
   /**
    * Class representing a single dataset
    */
@@ -859,7 +842,7 @@ angular.module('datasourcejs', [])
             this.batchServiceData = [];
           };
 
-          $httpLegacy({
+          $http({
             method: "POST",
             url: _self.removeSlash(((window.hostApp || "") + url + "/$batch")),
             data: odataPost,
@@ -1050,7 +1033,7 @@ angular.module('datasourcejs', [])
         if (this.batchEnabled(object) && verb != 'GET') {
           return this.getBatchService(verb);
         }
-        return $httpLegacy;
+        return $http;
       }
 
       /**
@@ -2635,7 +2618,7 @@ angular.module('datasourcejs', [])
           // Get an ajax promise
           var url = this.entity;
           url += (this.entity.endsWith('/')) ? '__new__' : '/__new__';
-          this.$promise = $httpLegacy({
+          this.$promise = $http({
             method: "GET",
             url: this.removeSlash((window.hostApp || "") + url),
             headers: this.headers
