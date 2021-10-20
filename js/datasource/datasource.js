@@ -84,7 +84,7 @@ var initDatasource = function(scope, element, attrs, DatasetManager, $timeout, $
     onPost: attrs.onPost,
     onPut: attrs.onPut,
     onDelete: attrs.onDelete,
-    defaultNotSpecifiedErrorMessage: $translate.instant('General.ErrorNotSpecified'),
+    defaultNotSpecifiedErrorMessage: $translate.instant('General.ErrorOnServerCommunication'),
     dependentBy: attrs.dependentBy,
     dependentLazyPost: attrs.dependentLazyPost,
     batchPost: attrs.batchpost === "true",
