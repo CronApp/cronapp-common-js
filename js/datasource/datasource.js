@@ -3520,15 +3520,17 @@ angular.module('datasourcejs', [])
 
       parameters = this.parametersExpression;
       let ds = eval(this.dependentLazyPost);
-      var arr = ds.getAllData();
 
-      if (ds && ds.active && ds.active.__$id == parentId) {
-        obj = ds.active;
-      } else {
-        for (var i = 0; i < arr.length; i++) {
-          if (arr[i].__$id == parentId) {
-            obj = arr[i];
-            break;
+      if (ds) {
+        var arr = ds.getAllData();
+        if (ds.active && ds.active.__$id == parentId) {
+          obj = ds.active;
+        } else {
+          for (var i = 0; i < arr.length; i++) {
+            if (arr[i].__$id == parentId) {
+              obj = arr[i];
+              break;
+            }
           }
         }
       }
