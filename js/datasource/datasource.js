@@ -4979,6 +4979,8 @@ function(DatasetManager, $timeout, $parse, Notification, $translate, $location, 
   };
 }])
 
+let datasourceRepeat = 1;
+
 app.directive('crnRepeat', function(DatasetManager, $compile, $parse, $injector, $rootScope) {
   return {
     restrict: 'A',
@@ -4986,21 +4988,22 @@ app.directive('crnRepeat', function(DatasetManager, $compile, $parse, $injector,
     terminal: true,
     link: function(scope, element, attrs, controllers, transclude) {
 
+      datasourceRepeat++;
       if (attrs.crnRepeat) {
         scope.data = DatasetManager.datasets;
         if (scope.data[attrs.crnRepeat]) {
-          scope.datasourceRepeat = scope.data[attrs.crnRepeat];
+          scope['datasourceRepeat' + datasourceRepeat] = scope.data[attrs.crnRepeat];
         } else {
-          scope.datasourceRepeat = {};
-          scope.datasourceRepeat.data = $parse(attrs.crnRepeat)(scope);
+          scope['datasourceRepeat' + datasourceRepeat] = {};
+          scope['datasourceRepeat' + datasourceRepeat].data = $parse(attrs.crnRepeat)(scope);
         }
-        element.attr('ng-repeat', 'rowData in datasourceRepeat.data');
+        element.attr('ng-repeat', 'rowData in datasourceRepeat' + datasourceRepeat + '.data');
 
       }
 
       var tagName = element[0].tagName;
       $compile(element, null, 9999998)(scope);
-      scope.$watchCollection('datasourceRepeat.data', function (newVal, oldVal) {
+      scope.$watchCollection('datasourceRepeat' + datasourceRepeat + '.data', function (newVal, oldVal) {
         if (tagName.toLowerCase() == "ion-slide") {
           var $ionicSlideBoxDelegate = $injector.get('$ionicSlideBoxDelegate');
           $ionicSlideBoxDelegate.update();
