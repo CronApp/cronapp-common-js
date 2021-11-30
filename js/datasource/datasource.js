@@ -2913,11 +2913,12 @@ angular.module('datasourcejs', [])
       }.bind(this);
 
       if (!forceDelete && !silent && this.deleteMessage && this.deleteMessage.length > 0) {
-        if (confirm(this.deleteMessage)) {
-          _remove(object, callback);
-        } else {
-          this.filter();
-        }
+
+        let buttonConfirm = {"title": this.translate.instant("yes"), value: function(){_remove(object, callback);}};
+        let buttonCancel = {"title": this.translate.instant("no"), primaryValue: 'true', value: () => {this.filter()}};
+        let modalButtons = [buttonCancel, buttonConfirm];
+
+        window.cronapi.notification.confirmDialogAlert("warning", "", this.deleteMessage, modalButtons);
       } else {
         _remove(object, callback);
       }
