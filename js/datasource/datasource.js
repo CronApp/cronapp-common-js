@@ -2503,27 +2503,22 @@ angular.module('datasourcejs', [])
 
     this.findObj = function(keyObj, multiple, onSuccess, onError, useKeys) {
 
-      var keys = useKeys || this.keys;
+      this.keyObj = keyObj;
+      this.keys = useKeys || this.keys;
 
-      for (var i = 0; i < this.data.length; i++) {
-
-        var found = false;
-        var item = this.data[i];
-        for (var j=0;j<keys.length;j++) {
-          if (keyObj[j] == item[keys[j]])
-            found = true;
-          else
-            found = false;
-        }
-
-        if (found) {
-          if (onSuccess) {
-            onSuccess(this.data[i]);
+      this.filterValues = function(elem) {
+        for (let i=0;i<this.keys.length;i++) { 
+          if (this.keyObj[i] == elem[this.keys[i]]) {
+            return elem;
           }
-          return;
         }
-      }
+      }.bind(this);
 
+      let values = this.data.filter(this.filterValues);
+      if (values && values.length > 0) {
+        if (onSuccess) onSuccess(values);
+        return;
+      }
 
       var terms = this.buildURL(keyObj, useKeys);
 
@@ -2542,9 +2537,10 @@ angular.module('datasourcejs', [])
       this.fetch(filterData, {
         success: function(data) {
           if (onSuccess) {
-            onSuccess(data.length?data[0]:null);
+            let values = data.filter(this.filterValues);
+            onSuccess(values);
           }
-        },
+        }.bind(this),
         error: function(error) {
           if (onError) {
             onError();
