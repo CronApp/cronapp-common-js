@@ -31,6 +31,11 @@
       "file": "index.html",
       "script": "plugins/cronapp-common-js/dist/parser.min.js",
       "type": "script"
+    },
+    {
+      "file": "index.html",
+      "script": "js/dataSourceMap.js",
+      "type": "script"
     }
   ],
   "replaces":[
