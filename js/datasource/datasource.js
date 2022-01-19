@@ -3,6 +3,7 @@ var ISO_PATTERN  = new RegExp("(\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\
 var TIME_PATTERN  = new RegExp("PT(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)(?:\\.(\\d+)?)?S)?");
 var DEP_PATTERN  = new RegExp("\\{\\{(.*?)\\|raw\\}\\}");
 var HTTP_STATUS = new RegExp("HTTP\\/1\\.1 (\\d+) (.*)");
+var DS_ID = new RegExp("[\\w\\_\\.\\d]+");
 
 
 (function ($) {
@@ -293,11 +294,8 @@ var initDatasource = function(scope, element, attrs, DatasetManager, $timeout, $
   attrs.$observe('entity', function(value) {
     datasource.entity = value;
 
-    if (window.dataSourceMap && window.dataSourceMap[datasource.entity]) {
-      datasource.entity = window.dataSourceMap[datasource.entity].serviceUrlODATA || window.dataSourceMap[datasource.entity].serviceUrl;
-      if(datasource.entity.charAt(0) === "/"){
-        datasource.entity = datasource.entity.substr(1);
-      }
+    if (datasource.entity.match(DS_ID)) {
+      datasource.entity = "api/cronapi/odata/v2/" + datasource.entity.replaceAll(".", "/");
     }
 
     if (!firstLoad.entity) {
@@ -4773,11 +4771,9 @@ angular.module('datasourcejs', [])
 
         dts.entity = props.entity;
 
-        if (window.dataSourceMap && window.dataSourceMap[dts.entity]) {
-          dts.entity = window.dataSourceMap[dts.entity].serviceUrlODATA || window.dataSourceMap[dts.entity].serviceUrl;
-          if(dts.entity.charAt(0) === "/"){
-            dts.entity = dts.entity.substr(1);
-          }
+
+        if (dts.entity.match(DS_ID)) {
+          dts.entity = "api/cronapi/odata/v2/" +  dts.entity.replaceAll(".", "/");
         } else {
           if (dts.isLocalData()) {
             var path = dts.entity.substring(dts.entity.indexOf("//")+2, dts.entity.length).split("/");
