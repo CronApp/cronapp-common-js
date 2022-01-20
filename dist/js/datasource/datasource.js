@@ -1,1 +1,5039 @@
-var ISO_PATTERN=/(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z))/,TIME_PATTERN=/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)(?:\.(\d+)?)?S)?/,DEP_PATTERN=/\{\{(.*?)\|raw\}\}/,HTTP_STATUS=/HTTP\/1\.1 (\d+) (.*)/;(function(e){var t={callback:function(){},runOnLoad:!0,frequency:100,previousVisibility:null},a={};a.checkVisibility=function(e,t){if(jQuery.contains(document,e[0])){var n=t.previousVisibility,s=e.is(":visible");t.previousVisibility=s;var r=null==n;r?t.runOnLoad&&t.callback(e,s,r):n!==s&&t.callback(e,s,r),setTimeout(function(){a.checkVisibility(e,t)},t.frequency)}},e.fn.visibilityChanged=function(n){var s=e.extend({},t,n);return this.each(function(){a.checkVisibility(e(this),s)})}})(jQuery);var initDatasource=function(e,t,a,n,s,r,i,o,d,c,l,u){var p=parseInt(9999*Math.random()),g="origin-path:"+d.path();a.headers=void 0===a.headers||null===a.headers?g:a.headers.concat(";",g);var y,h={name:a.name,entity:a.entity,apiVersion:a.apiVersion,enabled:!a.hasOwnProperty("enabled")||"true"===a.enabled,keys:a.keys,endpoint:a.endpoint,lazy:"true"===a.lazy,append:!a.hasOwnProperty("append")||"true"===a.append,prepend:a.hasOwnProperty("prepend")&&""===a.prepend||"true"===a.prepend,watch:a.watch,rowsPerPage:a.rowsPerPage,offset:a.offset,filterURL:a.filter,watchFilter:a.watchFilter,deleteMessage:a.deleteMessage||""===a.deleteMessage?a.deleteMessage:o.instant("General.RemoveData"),headers:a.headers,autoPost:"true"===a.autoPost,autoRefresh:a.autoRefresh!==void 0&&null!==a.autoRefresh?a.autoRefresh:0,onError:a.onError,onAfterFill:a.onAfterFill,onBeforeCreate:a.onBeforeCreate,onAfterCreate:a.onAfterCreate,onBeforeUpdate:a.onBeforeUpdate,onAfterUpdate:a.onAfterUpdate,onBeforeDelete:a.onBeforeDelete,onAfterDelete:a.onAfterDelete,onChangeStatus:a.onChangeStatus,onGet:a.onGet,onPost:a.onPost,onPut:a.onPut,onDelete:a.onDelete,defaultNotSpecifiedErrorMessage:o.instant("General.ErrorOnServerCommunication"),dependentBy:a.dependentBy,dependentLazyPost:a.dependentLazyPost,batchPost:"true"===a.batchpost,dependentLazyPostField:a.dependentLazyPostField,parameters:a.parameters,parametersNullStrategy:a.parametersNullStrategy?a.parametersNullStrategy:"default",parametersExpression:$(t).attr("parameters"),conditionExpression:$(t).attr("condition"),condition:a.condition,orderBy:a.orderBy,loadDataStrategy:a.loadDataStrategy,schema:a.schema?JSON.parse(a.schema):void 0,checkRequired:!a.hasOwnProperty("checkrequired")||""===a.checkrequired||"true"===a.checkrequired,fetchOnVisible:!(a.fetchOnVisible===void 0||null===a.fetchOnVisible)&&"true"===a.fetchOnVisible},D={filter:!0,entity:!0,enabled:!0,parameters:!0};if(e.params){for(var m in e.params)if(e.params.hasOwnProperty(m)){var M=e.params[m];if(m.startsWith("$"+a.name+".")){var f=m.split(".");2==f.length&&("$filterMode"==f[1]?h.startMode=M:(y?y+=";":y="",y+=isNaN(M)?f[1]+"='"+M+"'":f[1]+"="+M))}}y&&(h.parameters=y,h.parametersExpression=y)}var L,p=parseInt(9999*Math.random()),v=n.initDataset(h,e,l,r,u,p,o);a.$observe("filter",function(e){v.isPostingBatchData()||(D.filter?s(function(){D.filter=!1},0):(s.cancel(L),L=s(function(){v.events.overRideRefresh?v.callDataSourceEvents("overRideRefresh","filter",e):v.filter(e,function(e){v.events.refresh&&v.callDataSourceEvents("refresh",e,"filter")}),v.lastFilterParsed=e},100)))}),y||a.$observe("parameters",function(e){v.isPostingBatchData()||v.parameters!=e&&(v.parameters=e,s.cancel(L),L=s(function(){v.callDataSourceEvents("changeDependency","parameters",v.parameters),v.events.overRideRefresh?v.callDataSourceEvents("overRideRefresh","parameters",v.parameters):v.fetch({params:{}},{success:function(e){v.events.refresh&&v.callDataSourceEvents("refresh",e,"parameters")}})},0))});let b={lastCondition:void 0,timeForCondition:void 0,typingSpeedLimit:1e3,maxWaitingValue:1e3,wait:function(){if(this.timeForCondition=0,this.lastCondition){let e=new Date().getTime()-this.lastCondition.getTime();e<this.typingSpeedLimit&&(this.timeForCondition=this.maxWaitingValue)}return this.lastCondition=new Date,this.timeForCondition}};a.$observe("condition",function(e){if(!v.isPostingBatchData()&&v.condition!=e){if(v.condition=e,"button"===v.loadDataStrategy)return;s.cancel(L),L=s(function(){v.callDataSourceEvents("changeDependency","condition",v.condition),v.events.overRideRefresh?v.callDataSourceEvents("overRideRefresh","condition",v.condition):v.fetch({params:{}},{success:function(e){v.events.refresh&&v.callDataSourceEvents("refresh",e,"condition")}})},b.wait())}}),a.$observe("enabled",function(e){var t="true"===e;v.enabled!=t&&(v.enabled=t,v.enabled&&(s.cancel(L),L=s(function(){v.events.overRideRefresh?v.callDataSourceEvents("overRideRefresh","enabled",v.parameters):v.fetch({params:{}},{success:function(e){v.events.refresh&&v.callDataSourceEvents("refresh",e,"enabled")}})},200)))}),a.$observe("entity",function(e){v.entity=e,window.dataSourceMap&&window.dataSourceMap[v.entity]&&(v.entity=window.dataSourceMap[v.entity].serviceUrlODATA||window.dataSourceMap[v.entity].serviceUrl,"/"===v.entity.charAt(0)&&(v.entity=v.entity.substr(1))),D.entity?s(function(){D.entity=!1}):(s.cancel(L),L=s(function(){v.fetch({params:{}},{success:function(e){v.events.refresh&&v.callDataSourceEvents("refresh",e,"entity")}})},200))}),e.$on("$destroy",function(){c[a.name]&&c[a.name+".instanceId"]==p&&(c[a.name].destroy(),delete window[a.name],delete c[a.name],delete c[a.name+".instanceId"])})};angular.module("datasourcejs",[]).factory("DatasetManager",["$http","$q","$timeout","$rootScope","$window","Notification",function($http,$q,$timeout,$rootScope,$window,Notification){this.datasets={};const $httpLegacy=e=>{let t=$http(e);return{success:function(e){return t.then(t=>{e(t.data,t.status,t.headers,t.config)}),this},error:function(e){return t.catch(t=>{e(t.data,t.status,t.headers,t.config)}),this}}};var DataSet=function(name,scope,fetchOnVisible){function reverseArr(e){if(e){for(var t=[],a=e.length-1;0<=a;a--)t.push(e[a]);return t}return[]}function toBase64(e,t){var a=new FileReader;a.readAsDataURL(e),a.onload=function(a){var e=a.target.result.substr(a.target.result.indexOf("base64,")+7);t(e)}}function uuid(){var e,t,a="";for(e=0;32>e;e++)t=0|16*Math.random(),(8==e||12==e||16==e||20==e)&&(a+="-"),a+=(12==e?4:16==e?8|3&t:t).toString(16);return a}var NO_IMAGE_UPLOAD="data:image/svg+xml;utf8;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pgo8IS0tIEdlbmVyYXRvcjogQWRvYmUgSWxsdXN0cmF0b3IgMTYuMC4wLCBTVkcgRXhwb3J0IFBsdWctSW4gLiBTVkcgVmVyc2lvbjogNi4wMCBCdWlsZCAwKSAgLS0+CjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgdmVyc2lvbj0iMS4xIiBpZD0iQ2FwYV8xIiB4PSIwcHgiIHk9IjBweCIgd2lkdGg9IjEyOHB4IiBoZWlnaHQ9IjEyOHB4IiB2aWV3Qm94PSIwIDAgNDQuNTAyIDQ0LjUwMiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgNDQuNTAyIDQ0LjUwMjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8Zz4KCTxnPgoJCTxwYXRoIGQ9Ik05Ljg2MiwzNS42MzhoMjQuNzc5YzAtNS41NDYtMy44NjMtMTAuMjAzLTkuMTEzLTExLjYwNGMyLjc1LTEuMjQ4LDQuNjY4LTQuMDEzLDQuNjY4LTcuMjI5ICAgIGMwLTQuMzg4LTMuNTU5LTcuOTQyLTcuOTQyLTcuOTQyYy00LjM4NywwLTcuOTQzLDMuNTU3LTcuOTQzLDcuOTQyYzAsMy4yMTksMS45MTYsNS45OCw0LjY2OCw3LjIyOSAgICBDMTMuNzI1LDI1LjQzNSw5Ljg2MiwzMC4wOTIsOS44NjIsMzUuNjM4eiIgZmlsbD0iIzkxOTE5MSIvPgoJCTxwYXRoIGQ9Ik0xLjUsMTQuMTY5YzAuODI4LDAsMS41LTAuNjcyLDEuNS0xLjVWNC4zMzNoOC4zMzZjMC44MjgsMCwxLjUtMC42NzIsMS41LTEuNWMwLTAuODI4LTAuNjcyLTEuNS0xLjUtMS41SDIuNzc1ICAgIEMxLjI0NCwxLjMzMywwLDIuNTc3LDAsNC4xMDh2OC41NjFDMCwxMy40OTcsMC42NywxNC4xNjksMS41LDE0LjE2OXoiIGZpbGw9IiM5MTkxOTEiLz4KCQk8cGF0aCBkPSJNNDEuNzI3LDEuMzMzaC04LjU2MmMtMC44MjcsMC0xLjUsMC42NzItMS41LDEuNWMwLDAuODI4LDAuNjczLDEuNSwxLjUsMS41aDguMzM2djguMzM2YzAsMC44MjgsMC42NzMsMS41LDEuNSwxLjUgICAgczEuNS0wLjY3MiwxLjUtMS41di04LjU2QzQ0LjUwMiwyLjU3OSw0My4yNTYsMS4zMzMsNDEuNzI3LDEuMzMzeiIgZmlsbD0iIzkxOTE5MSIvPgoJCTxwYXRoIGQ9Ik00My4wMDIsMzAuMzMzYy0wLjgyOCwwLTEuNSwwLjY3Mi0xLjUsMS41djguMzM2aC04LjMzNmMtMC44MjgsMC0xLjUsMC42NzItMS41LDEuNXMwLjY3MiwxLjUsMS41LDEuNWg4LjU2ICAgIGMxLjUzLDAsMi43NzYtMS4yNDYsMi43NzYtMi43NzZ2LTguNTZDNDQuNTAyLDMxLjAwNSw0My44MywzMC4zMzMsNDMuMDAyLDMwLjMzM3oiIGZpbGw9IiM5MTkxOTEiLz4KCQk8cGF0aCBkPSJNMTEuMzM2LDQwLjE2OUgzdi04LjMzNmMwLTAuODI4LTAuNjcyLTEuNS0xLjUtMS41Yy0wLjgzLDAtMS41LDAuNjcyLTEuNSwxLjV2OC41NmMwLDEuNTMsMS4yNDQsMi43NzYsMi43NzUsMi43NzZoOC41NjEgICAgYzAuODI4LDAsMS41LTAuNjcyLDEuNS0xLjVTMTIuMTY1LDQwLjE2OSwxMS4zMzYsNDAuMTY5eiIgZmlsbD0iIzkxOTE5MSIvPgoJPC9nPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+Cjwvc3ZnPgo=",NO_FILE_UPLOAD="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pgo8IS0tIEdlbmVyYXRvcjogQWRvYmUgSWxsdXN0cmF0b3IgMTYuMC4wLCBTVkcgRXhwb3J0IFBsdWctSW4gLiBTVkcgVmVyc2lvbjogNi4wMCBCdWlsZCAwKSAgLS0+CjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgdmVyc2lvbj0iMS4xIiBpZD0iQ2FwYV8xIiB4PSIwcHgiIHk9IjBweCIgd2lkdGg9IjUxMnB4IiBoZWlnaHQ9IjUxMnB4IiB2aWV3Qm94PSIwIDAgNTQ4LjE3NiA1NDguMTc2IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA1NDguMTc2IDU0OC4xNzY7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPGc+Cgk8cGF0aCBkPSJNNTI0LjMyNiwyOTcuMzUyYy0xNS44OTYtMTkuODktMzYuMjEtMzIuNzgyLTYwLjk1OS0zOC42ODRjNy44MS0xMS44LDExLjcwNC0yNC45MzQsMTEuNzA0LTM5LjM5OSAgIGMwLTIwLjE3Ny03LjEzOS0zNy40MDEtMjEuNDA5LTUxLjY3OGMtMTQuMjczLTE0LjI3Mi0zMS40OTgtMjEuNDExLTUxLjY3NS0yMS40MTFjLTE4LjA4MywwLTMzLjg3OSw1LjkwMS00Ny4zOSwxNy43MDMgICBjLTExLjIyNS0yNy40MS0yOS4xNzEtNDkuMzkzLTUzLjgxNy02NS45NWMtMjQuNjQ2LTE2LjU2Mi01MS44MTgtMjQuODQyLTgxLjUxNC0yNC44NDJjLTQwLjM0OSwwLTc0LjgwMiwxNC4yNzktMTAzLjM1Myw0Mi44MyAgIGMtMjguNTUzLDI4LjU0NC00Mi44MjUsNjIuOTk5LTQyLjgyNSwxMDMuMzUxYzAsMi40NzQsMC4xOTEsNi41NjcsMC41NzEsMTIuMjc1Yy0yMi40NTksMTAuNDY5LTQwLjM0OSwyNi4xNzEtNTMuNjc2LDQ3LjEwNiAgIEM2LjY2MSwyOTkuNTk0LDAsMzIyLjQzLDAsMzQ3LjE3OWMwLDM1LjIxNCwxMi41MTcsNjUuMzI5LDM3LjU0NCw5MC4zNThjMjUuMDI4LDI1LjAzNyw1NS4xNSwzNy41NDgsOTAuMzYyLDM3LjU0OGgzMTAuNjM2ICAgYzMwLjI1OSwwLDU2LjA5Ni0xMC43MTEsNzcuNTEyLTMyLjEyYzIxLjQxMy0yMS40MDksMzIuMTIxLTQ3LjI0NiwzMi4xMjEtNzcuNTE2QzU0OC4xNzIsMzM5Ljk0NCw1NDAuMjIzLDMxNy4yNDgsNTI0LjMyNiwyOTcuMzUyICAgeiBNMzYyLjcyOSwyODkuNjQ4Yy0xLjgxMywxLjgwNC0zLjk0OSwyLjcwNy02LjQyLDIuNzA3aC02My45NTN2MTAwLjUwMmMwLDIuNDcxLTAuOTAzLDQuNjEzLTIuNzExLDYuNDIgICBjLTEuODEzLDEuODEzLTMuOTQ5LDIuNzExLTYuNDIsMi43MTFoLTU0LjgyNmMtMi40NzQsMC00LjYxNS0wLjg5Ny02LjQyMy0yLjcxMWMtMS44MDQtMS44MDctMi43MTItMy45NDktMi43MTItNi40MlYyOTIuMzU1ICAgSDE1NS4zMWMtMi42NjIsMC00Ljg1My0wLjg1NS02LjU2My0yLjU2M2MtMS43MTMtMS43MTQtMi41NjgtMy45MDQtMi41NjgtNi41NjZjMC0yLjI4NiwwLjk1LTQuNTcyLDIuODUyLTYuODU1bDEwMC4yMTMtMTAwLjIxICAgYzEuNzEzLTEuNzE0LDMuOTAzLTIuNTcsNi41NjctMi41N2MyLjY2NiwwLDQuODU2LDAuODU2LDYuNTY3LDIuNTdsMTAwLjQ5OSwxMDAuNDk1YzEuNzE0LDEuNzEyLDIuNTYyLDMuOTAxLDIuNTYyLDYuNTcxICAgQzM2NS40MzgsMjg1LjY5NiwzNjQuNTM1LDI4Ny44NDUsMzYyLjcyOSwyODkuNjQ4eiIgZmlsbD0iI2NlY2VjZSIvPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+Cjwvc3ZnPgo=";this.fetchOnVisible=fetchOnVisible,this.parent=$("[name='"+name+"']").parent(),this.fetchOnVisible&&this.parent.visibilityChanged({callback:function(e,t){t&&this.holdServiceCall&&this.holdServiceCall()}.bind(this),runOnLoad:!1,frequency:100}),this.Notification=Notification,this.$scope=scope,this.noImageUpload="data:image/svg+xml;utf8;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pgo8IS0tIEdlbmVyYXRvcjogQWRvYmUgSWxsdXN0cmF0b3IgMTYuMC4wLCBTVkcgRXhwb3J0IFBsdWctSW4gLiBTVkcgVmVyc2lvbjogNi4wMCBCdWlsZCAwKSAgLS0+CjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgdmVyc2lvbj0iMS4xIiBpZD0iQ2FwYV8xIiB4PSIwcHgiIHk9IjBweCIgd2lkdGg9IjEyOHB4IiBoZWlnaHQ9IjEyOHB4IiB2aWV3Qm94PSIwIDAgNDQuNTAyIDQ0LjUwMiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgNDQuNTAyIDQ0LjUwMjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8Zz4KCTxnPgoJCTxwYXRoIGQ9Ik05Ljg2MiwzNS42MzhoMjQuNzc5YzAtNS41NDYtMy44NjMtMTAuMjAzLTkuMTEzLTExLjYwNGMyLjc1LTEuMjQ4LDQuNjY4LTQuMDEzLDQuNjY4LTcuMjI5ICAgIGMwLTQuMzg4LTMuNTU5LTcuOTQyLTcuOTQyLTcuOTQyYy00LjM4NywwLTcuOTQzLDMuNTU3LTcuOTQzLDcuOTQyYzAsMy4yMTksMS45MTYsNS45OCw0LjY2OCw3LjIyOSAgICBDMTMuNzI1LDI1LjQzNSw5Ljg2MiwzMC4wOTIsOS44NjIsMzUuNjM4eiIgZmlsbD0iIzkxOTE5MSIvPgoJCTxwYXRoIGQ9Ik0xLjUsMTQuMTY5YzAuODI4LDAsMS41LTAuNjcyLDEuNS0xLjVWNC4zMzNoOC4zMzZjMC44MjgsMCwxLjUtMC42NzIsMS41LTEuNWMwLTAuODI4LTAuNjcyLTEuNS0xLjUtMS41SDIuNzc1ICAgIEMxLjI0NCwxLjMzMywwLDIuNTc3LDAsNC4xMDh2OC41NjFDMCwxMy40OTcsMC42NywxNC4xNjksMS41LDE0LjE2OXoiIGZpbGw9IiM5MTkxOTEiLz4KCQk8cGF0aCBkPSJNNDEuNzI3LDEuMzMzaC04LjU2MmMtMC44MjcsMC0xLjUsMC42NzItMS41LDEuNWMwLDAuODI4LDAuNjczLDEuNSwxLjUsMS41aDguMzM2djguMzM2YzAsMC44MjgsMC42NzMsMS41LDEuNSwxLjUgICAgczEuNS0wLjY3MiwxLjUtMS41di04LjU2QzQ0LjUwMiwyLjU3OSw0My4yNTYsMS4zMzMsNDEuNzI3LDEuMzMzeiIgZmlsbD0iIzkxOTE5MSIvPgoJCTxwYXRoIGQ9Ik00My4wMDIsMzAuMzMzYy0wLjgyOCwwLTEuNSwwLjY3Mi0xLjUsMS41djguMzM2aC04LjMzNmMtMC44MjgsMC0xLjUsMC42NzItMS41LDEuNXMwLjY3MiwxLjUsMS41LDEuNWg4LjU2ICAgIGMxLjUzLDAsMi43NzYtMS4yNDYsMi43NzYtMi43NzZ2LTguNTZDNDQuNTAyLDMxLjAwNSw0My44MywzMC4zMzMsNDMuMDAyLDMwLjMzM3oiIGZpbGw9IiM5MTkxOTEiLz4KCQk8cGF0aCBkPSJNMTEuMzM2LDQwLjE2OUgzdi04LjMzNmMwLTAuODI4LTAuNjcyLTEuNS0xLjUtMS41Yy0wLjgzLDAtMS41LDAuNjcyLTEuNSwxLjV2OC41NmMwLDEuNTMsMS4yNDQsMi43NzYsMi43NzUsMi43NzZoOC41NjEgICAgYzAuODI4LDAsMS41LTAuNjcyLDEuNS0xLjVTMTIuMTY1LDQwLjE2OSwxMS4zMzYsNDAuMTY5eiIgZmlsbD0iIzkxOTE5MSIvPgoJPC9nPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+Cjwvc3ZnPgo=",this.noFileUpload=NO_FILE_UPLOAD,this.$apply=function(e){scope.safeApply(e)}.bind(scope),this.columns=[],this.data=[],this.name=name,this.keys=[],this.enabled=!0,this.endpoint=null,this.active={},this.inserting=!1,this.editing=!1,this.fetchSize=2,this.observers=[],this.rowsPerPage=null,this.append=!0,this.headers=null,this.responseHeaders=null,this._activeValues=null,this.errorMessage="",this.onError=null,this.links=null,this.loadedFinish=null,this.lastFilterParsed=null,this.rowsCount=-1,this.events={},this.busy=!1,this.cursor=0,this._savedProps,this.hasMoreResults=!1,this.loaded=!1,this.unregisterDataWatch=null,this.dependentBufferLazyPostData=null,this.lastAction=null,this.dependentData=null,this.hasMemoryData=!1,this.batchPost=!1,this.caseInsensitive=null,this.terms=null,this.checkRequired=!0,this.schema;var _self=this,service=null;this.odataFile=[],this.destroy=function(){},this.init=function(){var dsScope=this;service={save:function(e){return this.call(_self.entity,"POST",e,!0)},update:function(e,t){return this.call(e,"PUT",t,!1)},remove:function(e,t){return this.call(e,"DELETE",t,!0)},call:function(e,t,a){var n={},s=0<=e.indexOf("/cronapi/query/");if(s){n.inputs=[a];var r,i,o={};if(_self.busy=!0,e=e.replace("/specificSearch",""),e=e.replace("/generalSearch",""),_self&&_self.$scope&&_self.$scope.vars)for(var d in o.vars={},_self.$scope.vars)o.vars[d]=_self.$scope.vars[d];for(var c in _self.$scope)_self.$scope[c]&&_self.$scope[c].constructor&&"DataSet"==_self.$scope[c].constructor.name&&(o[c]={},o[c].active=_self.$scope[c].active);n.fields=o}else n=a;var l={};for(var c in _self.copy(n,l,!0),delete l.__original,delete l.__status,delete l.__originalIdx,delete l.__sender,delete l.__$id,delete l.__parentId,delete l.$$hashKey,delete l.__fromMemory,delete l.__odatafiles,delete l.__$masterExpression,l)-1<c.indexOf("__odataFile_")&&(l[c.replace("__odataFile_","")]=void 0,delete l[c]);for(var c in l)if(l.hasOwnProperty(c)){let e=l[c];_self.isAutoGeneratedValue(e)&&delete l[c]}var u=function(e,t,a,n,i){if(_self.busy=!1,r&&(_self.isOData()?null!=e.d&&null!=e.d.result?(_self.normalizeData(e.d.result),r(e.d.result,!0,i)):null==e.d?r(e,!0,i):(_self.normalizeObject(e.d),r(e.d,!0,i)):r(s?e.value:e,!0,i)),s||_self.isOData()){var o=e;_self.isOData()&&(o={},o.commands=e.__callback,_self.normalizeData(o.commands)),_self.$scope.cronapi.evalInContext(JSON.stringify(o))}},p=_self.getParentDatasource();let g=p.getBatchDataItem(n);if(g&&g.result){let e=p.batchServiceData.indexOf(g);p.batchServiceData.splice(e,1),$timeout(()=>{u(g.result)},0),this.$promise={}}else this.$promise=_self.getService(t,n)({method:t,url:_self.removeSlash((window.hostApp||"")+e),data:"DELETE"==t?null:n?JSON.stringify(l):null,headers:_self.headers,rawData:n?l:null,originalObject:n?n:null,urlPart:e}).success(u).error(function(e){_self.busy=!1;var t;t=_self.isOData()?e.error.message.value:s&&e.value?e.value:e,_self.handleError(t),i&&i(t)});return this.$promise.then=function(e){return r=e,this},this.$promise.error=function(e){return i=e,this},this}},this.isAutoGeneratedValue=function(e){return"string"==typeof e&&10<e.length&&(e.startsWith("$autogenerated$")||e.substring(1).startsWith("$autogenerated$"))},this.getIndexedDB=function(e){return window.indexedDB||(window.indexedDB=window.indexedDB||window.mozIndexedDB||window.webkitIndexedDB||window.msIndexedDB,window.IDBTransaction=window.IDBTransaction||window.webkitIDBTransaction||window.msIDBTransaction,window.IDBKeyRange=window.IDBKeyRange||window.webkitIDBKeyRange||window.msIDBKeyRange),{properties:e,successCallback:null,errorCallback:null,type:null,args:null,success:function(e){return this.successCallback=e,this},error:function(e){return this.errorCallback=e,this},post:function(){return this.type="put",this.args=arguments,this},put:function(){return this.type="put",this.args=arguments,this},delete:function(){return this.type="delete",this.args=arguments,this},get:function(){return this.type="getAll",this.args=arguments,this},call:function(){request=window.indexedDB.open(this.properties.dbname,this.properties.dbversion||1),request.onerror=function(e){this.errorCallback&&this.errorCallback(e)}.bind(this),request.onsuccess=function(e){this.proceed(e.target.result)}.bind(this),request.onupgradeneeded=function(e){var t=e.target.result,a=t.createObjectStore(this.properties.objectStore,{keyPath:this.properties.key});a.transaction.oncomplete=function(){var e=t.transaction(this.properties.objectStore,"readwrite").objectStore(this.properties.objectStore);e.add({id:123,name:"Jose"})}.bind(this)}.bind(this)},proceed:function(e){if(this.type){var t=e.transaction(this.properties.objectStore,"readwrite"),a=t.objectStore(this.properties.objectStore),n=a[this.type].apply(a,this.args);n.onsuccess=function(e){this.successCallback&&("put"===this.type?this.successCallback(this.args[0]):this.successCallback(e.target.result))}.bind(this)}else this.successCallback&&this.successCallback()}}},this.batchServiceData=[],this.getBatchService=function(e){return function(t){var a={verb:e,properties:t,successCallback:null,errorCallback:null,success:function(e){return this.successCallback=e,this},error:function(e){return this.errorCallback=e,this}};return $timeout(function(){var n=this.getParentDatasource();let s=t.originalObject||t.rawData||t.data||this.active,r=this.entity;"PUT"==e&&(r=this.getEditionURL(s)),"DELETE"==e&&(r=this.getDeletionURL(s)),0<r.indexOf("/")&&(r=r.substring(r.lastIndexOf("/")+1,r.length)),n.batchServiceData.push({entity:r,data:s,promise:a}),a.successCallback&&a.successCallback.call(this,s,null,null,null,!0)}.bind(this)),a}.bind(this)},this.batchEnabled=function(e){return!!(e&&this.hasPendingChanges())&&null==this.getBatchDataItem(e)},this.getBatchDataItem=function(e){if(e){var t=this.getParentDatasource();for(let a,n=0;n<t.batchServiceData.length;n++)if(a=t.batchServiceData[n].data,a.__$id==e.__$id)return t.batchServiceData[n]}return null},this.performBatchPost=function(e){return new Promise(()=>{let t="batch_"+this.uuidv4(),a="";a+="--"+t+"\n";let n="changeset_"+this.uuidv4();a+="Content-Type: multipart/mixed; boundary="+n+"\n";for(let e,t=0;t<this.batchServiceData.length;t++){e=this.batchServiceData[t],a+="--"+n+"\n",a+="Content-Type: application/http\n",a+="Content-Transfer-Encoding:binary\n",a+=e.promise.properties.method+" "+e.entity+" HTTP/1.1\n",a+="Content-Type: application/json\n",a+="Accept: application/json\n",a+="X-Master-Id: "+e.promise.properties.originalObject.__$id+"\n",e.promise.properties.originalObject.__$masterExpression&&(a+="X-Detail-Fill: "+e.promise.properties.originalObject.__$masterExpression+"\n");let r=e.promise.properties.headers;for(var s in r)r.hasOwnProperty(s)&&(a+=s+": "+r[s]+"\n");"DELETE"!=e.promise.properties.method&&(a+=e.promise.properties.data+"\n")}a+="--"+n+"--\n",a+="--"+t+"--\n",console.log(a);let r=this.entity;0<r.indexOf("/")&&(r=r.substring(0,r.lastIndexOf("/")));let i={};this.copy(this.headers,i),i["Content-Type"]="multipart/mixed; boundary="+t;let o=(e,t,a,n)=>{let s;0<this.batchServiceData.length&&(s=this.batchServiceData[0].promise.errorCallback),s?s(e,t,a,n,!1):this.handleError(e),this.batchServiceData=[]};$httpLegacy({method:"POST",url:_self.removeSlash((window.hostApp||"")+r+"/$batch"),data:a,headers:i}).success(function(t,a,n,s){let r=this.parseBatchResult(t);for(let e=0;e<r.length;e++)if(400<=r[e].status)return void o(r[e].data,r[e].status);for(let e=0;e<this.batchServiceData.length;e++)this.batchServiceData[e].result=null==r[e].data?this.batchServiceData[e].data:r[e].data;if(e)e();else{let e;0<this.batchServiceData.length&&(e=this.batchServiceData[0].promise.successCallback),e&&(this.batchServiceData.splice(0,1),e(r[0].data,r[0].status,n,s,!1))}}.bind(this)).error(o)})},this.parseBatchResult=function(e){let t,a=[],n=e.split("\n");for(let r,i=0;i<n.length;i++){if(r=n[i],r.startsWith("{")&&a.push({status:t,data:JSON.parse(r)}),r.startsWith("HTTP/1.1")){var s=HTTP_STATUS.exec(r);t=s[1]}r.startsWith("HTTP/1.1")&&0<r.indexOf("No Content")&&a.push({status:t,data:null})}return a},this.uuidv4=function(){return"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(e){var t=0|16*Math.random(),a="x"==e?t:8|3&t;return a.toString(16)})},this.getService=function(verb,object){_self=this;var event=eval("this.on"+verb);return event||this.isLocalData()?function(e){var t={verb:verb,properties:e,successCallback:null,errorCallback:null,success:function(e){return this.successCallback=e,this},error:function(e){return this.errorCallback=e,this}};return $timeout(function(){var e,t={currentData:this.properties.rawData||this.properties.data||_self.active,filter:this.properties.filter||"",datasource:_self,selectedIndex:_self.cursor,index:_self.cursor,selectedRow:_self.active,item:_self.active,selectedKeys:_self.getKeyValues(_self.active,!0),selectedKey:_self.getFirstKeyValue(_self.active,!0),callback:this.successCallback};if(event)e=_self.$scope.$eval(event,t),e instanceof Promise?e.then(function(e){e&&"[object Array]"!==Object.prototype.toString.call(e)&&(e=[e]),_self.$scope.safeApply(function(){this.successCallback(e)}.bind(this))}.bind(this)).catch(function(e){_self.handleError(e)}.bind(this)):e&&this.successCallback(e);else{var a=new PouchDB(_self.localDBName);if("GET"==this.verb&&!this.properties.filter)a.allDocs({include_docs:!0,attachments:!0}).catch(this.errorCallback).then(function(e){for(var t=[],a=0;a<e.rows.length;a++)t.push(e.rows[a].doc);e.rows=t,this.successCallback&&this.successCallback(e)}.bind(this));else if("GET"==this.verb){var n=peg$parse(this.properties.filter);a.find({selector:n}).catch(this.errorCallback).then(function(e){e.rows=e.docs,e.total_rows=e.rows.length,this.successCallback&&this.successCallback(e)}.bind(this))}else"DELETE"==this.verb?a.remove(t.currentData).catch(this.errorCallback).then(this.successCallback):"POST"==this.verb?a.post(t.currentData).catch(this.errorCallback).then(function(e){t.currentData._id=e.id,t.currentData._rev=e.rev,this.successCallback&&this.successCallback(t.currentData)}.bind(this)):"PUT"==this.verb&&a.put(t.currentData).catch(this.errorCallback).then(function(e){t.currentData._rev=e.rev,this.successCallback&&this.successCallback(t.currentData)}.bind(this))}}.bind(t),0),t}:this.batchEnabled(object)&&"GET"!=verb?this.getBatchService(verb):$httpLegacy},this.isBusy=function(){return this.busy},this.isLoaded=function(){return this.loaded},this.toString=function(){return"[Datasource]"},this.handleAfterCallBack=function(e,t){if(e)try{var a={currentData:this.data,datasource:this,selectedIndex:this.cursor,index:this.cursor,selectedRow:this.active,item:this.active,selectedKeys:this.getKeyValues(this.active,!0),selectedKey:this.getFirstKeyValue(_self.active,!0),callback:t};this.$scope.$eval(e,a)}catch(t){this.handleError(t)}},this.onMatchRegex=(e,t,a)=>n=>{let s=e.exec(n);return s&&s.length?n.split(t).join(a+t):n},this.handleBeforeCallBack=async function(e,t){var a=!0;let n=this.onMatchRegex(/cronapi.server/g,".run(",".toPromise().disableNotification()");if(e)try{var s={currentData:this.data,datasource:this,selectedIndex:this.cursor,index:this.cursor,selectedRow:this.active,item:this.active,selectedKeys:this.getKeyValues(this.active,!0),selectedKey:this.getFirstKeyValue(_self.active,!0),callback:t};await this.$scope.$eval(n(e),s)}catch(t){a=!1,this.handleError(t)}return a},this.handleError=function(e){if(console.log(e),e instanceof XMLDocument){var t=e.getElementsByTagName("message")[0].textContent;e=t,console.log(e)}var a="";if(e)if("[object String]"===Object.prototype.toString.call(e))a=e;else{var t=e.msg||e.desc||e.message||e.error||e.responseText;this.isOData()&&e.error.message&&e.error.message.value&&(t=e.error.message.value),t&&(a=t)}a||(a=this.defaultNotSpecifiedErrorMessage);if(result=/<h1>(.*)<\/h1>/gmi.exec(a),result&&2<=result.length&&(a=result[1]),this.errorMessage=a,!(this.onError&&""!==this.onError))this.onError=function(e){Notification.error(e)};else if("string"==typeof this.onError)try{var n={currentData:this.active,filter:"",datasource:this,selectedIndex:this.cursor,index:this.cursor,selectedRow:this.active,item:this.active,selectedKeys:this.getKeyValues(this.active,!0),selectedKey:this.getFirstKeyValue(this.active,!0),callback:this.successCallback},s=this.$scope.$eval(this.onError,n);"function"==typeof s&&(this.onError=s)}catch(t){isValid=!1,Notification.error(t)}this.onError.call(this,a)},this.observers&&0<this.observers.length&&$rootScope.$watch(function(){return this.active}.bind(this),function(e){e&&this.notifyObservers(e)}.bind(this),!0)},this.setFile=function(e,t,a){e&&"pattern"===e.$error||e&&toBase64(e,function(e){this.$apply=function(e){t[a]=e,scope.$apply(t)}.bind(scope),this.$apply(e)})},this.downloadFile=function(e,t){if(void 0!==t){for(var a=(window.hostApp||"")+this.entity+"/download/"+e,n=0;n<t.length;n++)a+="/"+t[n];var s={url:a,method:"GET",responseType:"arraybuffer"};$http(s).then(function(e){var t=new Blob([e.data],{type:"application/*"});$window.open(URL.createObjectURL(t))})}},this.openImage=function(e){if(-1==e.indexOf("https://")&&-1==e.indexOf("http://")){var t=$window.open("","_blank","height=300,width=400");t.document.write("<img src=\""+("data:image/png;base64,"+e)+"\"/>")}else $window.open(e,"_blank","height=300,width=400")},this.byteSize=function(e){function t(e,t){return-1!==t.indexOf(e,t.length-e.length)}function a(e){return t("==",e)?2:t("=",e)?1:0}return angular.isString(e)?function(e){return e.toString().replace(/\B(?=(\d{3})+(?!\d))/g," ")+" bytes"}(function(e){return 3*(e.length/4)-a(e)}(e)):""},this.insert=async function(obj,onSuccess,onError,forceSave){(await this.handleBeforeCallBack(this.onBeforeCreate))&&((this.dependentLazyPost||this.batchPost)&&!forceSave?(obj.__status="inserted",this.dependentLazyPost&&(obj.__parentId=eval(this.dependentLazyPost).active.__$id),this.hasMemoryData=!0,this.notifyPendingChanges(this.hasMemoryData),onSuccess&&onSuccess(obj)):service.save(obj).$promise.error(onError).then(onSuccess))},this.addDependentDatasource=function(dts){this.children||(this.children=[]),this.children.push(dts),this.dependentLazyPost?eval(this.dependentLazyPost).addDependentDatasource(dts):(!this.dependentData&&(this.dependentData=[]),this.dependentData.push(dts))},this.getParentDatasource=function(){return this.dependentLazyPost?eval(this.dependentLazyPost).getParentDatasource():this},this.updateObjectAtIndex=function(e,t,a){t=t||this.data,this.copy(e,t[a]),e.__$id=t[a].__$id,delete t[a].__status,delete t[a].__original,delete t[a].__originalIdx,delete t[a].__odatafiles,delete t[a].__$masterExpression},this.cleanDependentBuffer=function(){var e=[];$(this.data).each(function(){this.__status?"updated"==this.__status&&e.push(this.__original):e.push(this)}),this.data.length=0;for(var t=0;t<e.length;t++)delete e[t].__status,delete e[t].__original,delete e[t].__originalIdx,this.data.push(e[t]);if(this.postDeleteData)for(var t=0;t<this.postDeleteData.length;t++)delete this.postDeleteData[t].__status,delete this.postDeleteData[t].__original,delete this.postDeleteData[t].__originalIdx,this.data.push(this.postDeleteData[t]);this.data&&0<this.data.length?(this.cursor=0,this.active=this.data[0]):(this.cursor=-1,this.active=null),this.busy=!1,this.editing=!1,this.inserting=!1,this.postDeleteData=null,this.hasMemoryData=!1,this.notifyPendingChanges(this.hasMemoryData),this.events.read&&this.callDataSourceEvents("read",this.data),this.events.afterchanges&&this.callDataSourceEvents("afterchanges",this.data)},this.cancelBatchData=function(e){this.dependentData&&$(reverseArr(this.dependentData)).each(function(){this.cleanDependentBuffer()}),this.cleanDependentBuffer(),this.batchServiceData=[],e&&e()},this.flushDependencies=function(e,t){var a=[];if(this.dependentData){var n=function(){reduce(this.dependentData,function(e,n){a.push(e.storeDependentBuffer(function(){n()},void 0,t))}.bind(this),function(){e&&e(a)}.bind(this))}.bind(this);reduce(reverseArr(this.dependentData),function(e,a){e.storeDependentBuffer(function(){a()},!0,t)}.bind(this),function(){n()}.bind(this))}else e&&e(a)},this.postBatchData=function(e,t){let a=!t;t||(this.batchServiceData=[]);let n=()=>{a?(a=!1,this.performBatchPost(function(){this.postBatchData(e,!0)}.bind(this))):e&&e()};this.postingBatch=!0;var s=[],r=function(){this.storeDependentBuffer(function(){s.push(this.storeDependentBuffer(function(){reduce(this.dependentData,function(e,t){s.push(e.storeDependentBuffer(function(){t()},!1,a))}.bind(this),function(){this.postingBatch=!1;for(var e=0;e<s.length;e++)s[e]();n&&n()}.bind(this))}.bind(this),!1,a))}.bind(this),!0,a)}.bind(this);reduce(reverseArr(this.dependentData),function(e,t){e.storeDependentBuffer(function(){t()},!0,a)}.bind(this),function(){r()}.bind(this))};var reduce=function(e,t,a){if(!e||0==e.length)a();else{var n=e.reduce(function(e,a){return e.then(function(){return new Promise(function(e){t(a,e)})})},Promise.resolve());n.then(function(){a()})}};this.storeDependentBuffer=function(callback,onlyRemove,batchMode){var _self=this,dependentDS=eval(_self.dependentLazyPost);this.batchPost&&(dependentDS=this);var array=[];if(!onlyRemove&&(array=array.concat(_self.data),_self.memoryData))for(key in _self.memoryData)if(_self.memoryData.hasOwnProperty(key)){for(var mem=_self.memoryData[key],x=0;x<mem.data.length;x++)mem.data[x].__fromMemory=!0;array=array.concat(mem.data)}_self.postDeleteData&&(array=array.concat(_self.postDeleteData));var func=function(e,t){if(e.__status){if(!_self.parameters&&(_self.dependentLazyPostField&&(e[_self.dependentLazyPostField]=dependentDS.active),-1<_self.entity.indexOf("//"))){var a=dependentDS.getKeyValues(dependentDS.active),n="";for(var s in a)a.hasOwnProperty(s)&&(n+="/"+a[s]);n+="/",_self.entity=_self.entity.replace("//",n)}if(_self.parameters){var r=_self.getParametersMap(e.__parentId?e.__parentId:null);for(var s in r)r.hasOwnProperty(s)&&updateObjectValue(e,s,r[s]);let t=_self.getParametersBatchExpression(e.__parentId?e.__parentId:null);e.__$masterExpression=t}"inserted"==e.__status?function(e){var a;batchMode||(a=_self.processODataFiles(e)),_self.insert(e,function(n,s,r){if(r)return void t();var i=e.__sender,o=_self.getIndexOfListTempBuffer(e,array),d=!1,c=n;0<=o&&(c=array[o],d=array[o].__fromMemory,_self.updateObjectAtIndex(n,array,o)),_self.events.create&&!d&&(i&&(n=array[o],n.__sender=i),_self.callDataSourceEvents("create",n),delete n.__sender),a&&0<a.length?_self.sendODataFiles(a,n,function(e){_self.copy(e.data,c)}.bind(this),function(){t()}):t()},function(){t()},!0)}(e):"updated"==e.__status?function(e){var a;batchMode||(a=_self.processODataFiles(e)),_self.update(e,function(n,s,r){if(r)return void t();var i=e.__sender,o=_self.getIndexOfListTempBuffer(e,array),d=!1,c=n;0<=o&&(c=array[o],d=array[o].__fromMemory,_self.updateObjectAtIndex(n,array,o),n=array[o]),_self.events.update&&!d&&(i&&(n.__sender=i),_self.callDataSourceEvents("update",n),delete n.__sender),a&&0<a.length?_self.sendODataFiles(a,n,function(e){_self.copy(e.data,c)}.bind(this),function(){t()}):t()},function(){t()},!0)}(e):"deleted"==e.__status&&onlyRemove?function(e){_self.remove(e,function(a,n,s){if(s)return void t();if(_self.events.delete){var r={};_self.copy(e,r),delete r.__status,delete r.__original,delete r.__originalIdx,_self.callDataSourceEvents("delete",r)}t()},!0,null,function(){t()})}(e):t()}else t()},resetFunc=function(){onlyRemove||(this.busy=!1,this.editing=!1,this.inserting=!1,this.hasMemoryData=!1,this.memoryData=null,!batchMode&&this.notifyPendingChanges(this.hasMemoryData),this.events.afterchanges&&!batchMode&&this.callDataSourceEvents("afterchanges",this.data))}.bind(this);return reduce(array,func,function(){callback&&callback(),batchMode||(this.postDeleteData=null)}.bind(this)),resetFunc},this.getIndexOfListTempBuffer=function(e,t){t=t||this.data;for(var a=0;a<t.length;a++)if(t[a].__$id&&e.__$id&&t[a].__$id==e.__$id)return a;return-1},this.getObjectAsString=function(e){return this.isOData()?window.objToOData(e):null==e?"":"number"==typeof e?e+"@@number":e instanceof Date?e.toISOString()+"@@datetime":"boolean"==typeof e?e+"@@boolean":e+""},this.update=async function(e,t,a,n){(await this.handleBeforeCallBack(this.onBeforeUpdate))&&((this.dependentLazyPost||this.batchPost)&&!n?t&&t(e):service.update(this.getEditionURL(e,n),e).$promise.error(a).then(t))},this.validateFields=function(e,t){var a=$(e);if(0<a.length&&"checkbox"!==a.get(0).type){var n=$("label[for=\""+a.get(0).id+"\"]"),s=a.get(0).id;return 0<n.length&&(s=n.text()),t&&(Notification.error(t.replace("{0}",s)),$(a.get(0)).addClass("ng-touched").removeClass("ng-untouched"),a.get(0).focus&&a.get(0).focus()),!1}return!0},this.getPatterns=function(){return $("input[ng-model*=\""+this.name+".\"]").filter(function(){return $(this).attr("pattern")})},this.missingRequiredField=function(e){if(0<this.getPatterns().length)return!1;if(this.checkRequired){var t=this.validateFields("[required][ng-model*=\""+this.name+".\"].ng-invalid-required",e?"":this.translate.instant("FieldIsRequired"));return t=t&&this.validateFields("[required][ng-model*=\""+this.name+".\"].ng-empty",e?"":this.translate.instant("FieldIsRequired")),t=t&&this.validateFields("[ng-model*=\""+this.name+".\"].ng-invalid",e?"":this.translate.instant("FieldIsInvalid")),!t}return!1},this.hasInvalidField=function(){return!(0<this.getPatterns().length)&&!!this.checkRequired&&0<$("input[ng-model*=\""+this.name+".\"]:invalid").not(".ng-empty").length},this.postSilent=function(e,t){this.post(e,t,!0)},this.updateActive=function(e){for(var t in e)e.hasOwnProperty(t)&&"__status"!=t&&(this.active[t]=e[t])},this.processODataFiles=function(e){var t=[];for(var a in e)if(-1<a.indexOf("__odataFile_")){var n={field:a.replace("__odataFile_",""),value:e[a]};t.push(n),e[n.field]=void 0,delete e[a]}return t},this.sendODataFiles=function(e,t,a,n){if(t&&e&&0<e.length){var s=this.entity,r=this.getKeyValues(t),i=["("],o=0;for(var d in r)0<o&&i.push(","),i.push(d),i.push("="),i.push(window.objToOData(r[d])),o++;i.push(")"),s+=i.join("");var c=JSON.parse(localStorage.getItem("_u"));reduce(e,function(e,n){var r=e.value,i=new XMLHttpRequest;i.open("PUT",(window.hostApp||"")+s+"/"+e.field+"/$value"),i.setRequestHeader("X-Requested-With","XMLHttpRequest"),i.setRequestHeader("X-File-Name",r.name),i.setRequestHeader("Content-Type",(r.type||"application/octet-stream")+";charset=UTF-8"),i.setRequestHeader("X-AUTH-TOKEN",c.token),i.onreadystatechange=function(){if(4===i.readyState&&500===i.status){var r=new DOMParser,o=r.parseFromString(i.response,"text/xml");this.handleError(o)}4===i.readyState&&201===i.status&&service.call(s,"GET",{},!1).$promise.error(function(){Notification.error("Error send file")}).then(function(s){a?a({field:e.field,data:s}):t[e.field]=s[e.field],n()})}.bind(this),i.send(r)}.bind(this),function(){n&&n()}.bind(this))}else n&&n()},this.getFieldSchema=function(e){var t;if(this.schema)for(var a=0;a<this.schema.length;a++)if(this.schema[a].name==e){t=this.schema[a];break}return t},this.asyncPost=function(e,t,a){setTimeout(function(){this.post(e,t,a)}.bind(this),100)},this.copyWithoutAngularObj=function(){var e={};for(var t in this)this.hasOwnProperty(t)&&!t.startsWith("$")&&(e[t]=this[t]);return e},this.post=function(onSuccess,onError,silent,keepBuffer){!silent&&this.missingRequiredField()||!silent&&this.hasInvalidField()||(!keepBuffer&&(this.batchServiceData=[]),this.lastAction="post",this.busy=!0,this.inserting?this.insert(this.active,function(e,t,a){if(a&&this.dependentData&&!this.dependentLazyPost&&!this.batchPost)return void this.flushDependencies(()=>{this.performBatchPost(()=>{this.post(onSuccess,onError,silent,!0)})},!0);this.active.__sender&&(e.__sender=this.active.__sender),this.active.__$id&&(e.__$id=this.active.__$id);var n=function(a){if(this.active=e,this.handleAfterCallBack(this.onAfterCreate),this.onBackNomalState(),onSuccess&&onSuccess(this.active),this.events.create&&t&&(this.callDataSourceEvents("create",this.active),delete _self.active.__sender),this.events.memorycreate&&!t&&this.callDataSourceEvents("memorycreate",this.active),a)for(let e=0;e<a.length;e++)a[e]()}.bind(this),s=function(){this.data.push(e),!this.dependentData||this.dependentLazyPost||this.batchPost?n():this.flushDependencies(n,!1)}.bind(this);if(!t)s();else{var r=this.processODataFiles(this.active);r&&0<r.length?this.sendODataFiles(r,e,function(t){this.copy(t.data,e)}.bind(this),function(){s()}.bind(this)):s()}}.bind(this),onError):this.editing?this.update(this.active,function(obj,hotData,batchPostponed){if(batchPostponed&&this.dependentData&&!this.dependentLazyPost&&!this.batchPost)return void this.flushDependencies(()=>{this.performBatchPost(()=>{this.post(onSuccess,onError,silent,!0)})},batchPostponed);var odataFiles;hotData&&(odataFiles=this.processODataFiles(this.active));var foundRow,keyObj=this.getKeyValues(this.lastActive);this.data.forEach(function(currentRow){var found;if(this.lastActive.__$id&&currentRow.__$id)found=this.lastActive.__$id==currentRow.__$id;else{var dataKeys=this.getKeyValues(currentRow);for(var key in keyObj)if(dataKeys[key]&&dataKeys[key]===keyObj[key])found=!0;else{found=!1;break}}if(found){foundRow=currentRow;var lastActive={};this.copy(this.lastActive,lastActive),this.copy(obj,currentRow),this.lastActive&&this.lastActive.__sender&&(currentRow.__sender=this.lastActive.__sender),this.active=currentRow,(this.dependentLazyPost||this.batchPost)&&!currentRow.__status&&(currentRow.__status="updated",currentRow.__original=lastActive,this.hasMemoryData=!0,this.dependentLazyPost&&(currentRow.__parentId=eval(this.dependentLazyPost).active.__$id)),this.notifyPendingChanges(this.hasMemoryData),this.events.update&&hotData&&(this.callDataSourceEvents("update",this.active),delete this.active.__sender),this.events.memoryupdate&&!hotData&&this.callDataSourceEvents("memoryupdate",this.active)}}.bind(this));var back=function(e){if(foundRow&&this.handleAfterCallBack(this.onAfterUpdate),this.onBackNomalState(),onSuccess&&onSuccess(this.active),e)for(let t=0;t<e.length;t++)e[t]()}.bind(this),func=function(e){hotData?odataFiles&&0<odataFiles.length?this.sendODataFiles(odataFiles,foundRow,function(e){this.copy(e.data,foundRow)}.bind(this),function(){this.events.update&&hotData&&this.callDataSourceEvents("update",foundRow),back(e)}.bind(this)):back(e):back(e)}.bind(this);!this.dependentData||this.dependentLazyPost||this.batchPost?func():this.flushDependencies(func)}.bind(this),onError):0==this.data.length?this.startInserting(this.active,function(){this.post(onSuccess,onError,silent)}.bind(this)):this.startEditing(null,function(){this.post(onSuccess,onError,silent)}.bind(this)))},this.notifyPendingChanges=function(value){console.log("notifyPendingChanges : "+value),this.events.pendingchanges&&this.callDataSourceEvents("pendingchanges",value),this.dependentLazyPost&&eval(this.dependentLazyPost).notifyPendingChanges(value)},this.getDeletionURL=function(e,t){var a=this.getKeyValues(e.__original?e.__original:e,t),n="";this.isOData()&&(n="(");var s=0;for(var r in a)a.hasOwnProperty(r)&&(this.isOData()?(0<s&&(n+=","),n+=r+"="+this.getObjectAsString(a[r])):n+="/"+a[r],s++);this.isOData()&&(n+=")");var i=this.entity;return this.entity.endsWith("/")&&(i=i.substring(0,i.length-1)),i+n},this.notifyPendingChanges=function(value){console.log("notifyPendingChanges : "+value),this.events.pendingchanges&&this.callDataSourceEvents("pendingchanges",value),this.dependentLazyPost&&eval(this.dependentLazyPost).notifyPendingChanges(value)},this.getConditionParams=function(){if(this.condition)try{var e=this.$interpolate(this.conditionExpression)(this.$scope),t=JSON.parse(e);if("object"==typeof t){if(t.params){let e;for(var a,n=0;n<t.params.length;n++)a=t.params[n].fieldValue,2<=a.length&&"'"==a.charAt(0)&&"'"==a.charAt(a.length-1)&&(a=a.substring(1,a.length-1)),""!==a&&void 0!==a&&null!==a&&(e?e+="&":e="",e+=t.params[n].fieldName+"="+encodeURIComponent(a));return e}}}catch(t){console.log(t)}},this.getDeletionURL=function(e,t){var a=this.getKeyValues(e.__original?e.__original:e,t),n="";this.isOData()&&(n="(");var s=0;for(var r in a)a.hasOwnProperty(r)&&(this.isOData()?(0<s&&(n+=","),n+=r+"="+this.getObjectAsString(a[r])):n+="/"+a[r],s++);this.isOData()&&(n+=")");var i=this.entity;this.entity.endsWith("/")&&(i=i.substring(0,i.length-1)),i+=n;let o=this.getConditionParams();return o&&(i=i+"?"+o),i},this.getEditionURL=function(e,t){var a=this.getKeyValues(e.__original?e.__original:e,t),n="";for(var s in this.isOData()&&(n="("),a)a.hasOwnProperty(s)&&(n+=this.isOData()?("("==n?"":",")+s+"="+this.getObjectAsString(a[s]):"/"+a[s]);this.isOData()&&(n+=")");var r=this.entity;this.entity.endsWith("/")&&(r=r.substring(0,r.length-1)),r+=n;let i=this.getConditionParams();return i&&(r=r+"?"+i),r},this.refreshActive=function(e,t){if(this.active&&"inserted"!=this.active.__status){var a=this.getEditionURL(this.active),n=this.getKeyValues(this.active);this.$promise=this.getService("GET")({method:"GET",url:a,headers:this.headers}).success(function(a){var s=null;this.isOData()?(s=a.d,this.normalizeObject(s)):a&&0<a.length&&(s=a[0]);var r=-1,o=0;this.data.forEach(function(e){var t=!1,a=0,i=0;for(var d in n)i++,e[d]&&e[d]===n[d]&&a++;a==i&&(t=!0),t&&(r=o,s&&(this.copy(s,e),this.copy(s,this.active))),o++}.bind(this)),-1==r?t&&t():(this.events.update&&this.callDataSourceEvents("update",this.active),e&&e(this.active))}.bind(this)).error(function(){t&&t()}.bind(this))}else e&&e(this.active)},this.buildURL=function(e,t){var a=this.getKeyValues(this.active,!1,t);"object"!=typeof e&&(e=[e]);var n="",s=0;for(var r in a){if(a.hasOwnProperty(r)){var i;i=Array.isArray(e)?e[s]:e[r],0<s&&(n+=" and "),n+=r+" eq "+this.getObjectAsString(i)}s++}return n},this.findObj=function(e,t,a,n,s){for(var r=s||this.keys,o=0;o<this.data.length;o++){for(var d=!1,c=this.data[o],l=0;l<r.length;l++)d=e[l]==c[r[l]];if(d)return void(a&&a(this.data[o]))}var u,p=this.buildURL(e,s);u={params:{$filter:p}},(null==p||0==p.length)&&(u={}),this.fetch(u,{success:function(e){a&&a(e.length?e[0]:null)},error:function(){n&&n()}},void 0,{lookup:!0})},this.getColumn=function(e){var t=[];return $.each(this.data,function(a,n){t.push(n[e])}),t},this.onBackNomalState=function(){this.$scope.safeApply(function(){this.busy=!1,this.editing=!1,this.inserting=!1;let e=this.dependentData&&this.dependentData.filter(e=>e.inserting||e.editing);e&&e.forEach(e=>e.cancel()),this.noticeStatusChange()}.bind(this))},this.cancel=function(){this.inserting&&(0<=this.cursor?this.active=this.data[this.cursor]:this.active={}),this.editing&&(this.active=this.lastActive),this.onBackNomalState(),this.lastAction="cancel",this.dependentData&&$(this.dependentData).each(function(){this.cleanDependentBuffer()}),this.batchServiceData=[]},this.removeODataFields=function(e){for(var t in e)e.hasOwnProperty(t)&&e[t]&&e[t].__deferred&&delete e[t];return e},this.retrieveDefaultValues=function(e,t){if(this.isEventData()||this.isLocalData())this.$scope.safeApply(function(){this.active={},this.isLocalData()&&(this.active[this.keys[0]]=this.uuidv4()),this.updateWithParams(),t&&t()}.bind(this));else if(e)this.active=e||{},this.updateWithParams(),t&&t();else if(0<=this.entity.indexOf("cronapi")||this.isOData()){var a=this.entity;a+=this.entity.endsWith("/")?"__new__":"/__new__",this.$promise=$httpLegacy({method:"GET",url:this.removeSlash((window.hostApp||"")+a),headers:this.headers}).success(function(e){this.isOData()?(this.active=this.removeODataFields(e.d),this.normalizeData(this.active)):this.active=e,this.updateWithParams(),t&&t()}.bind(this)).error(function(){this.active={},this.updateWithParams(),t&&t()}.bind(this))}else this.active={},this.updateWithParams(),t&&t()};var updateObjectValue=function(e,t,a){for(var n,s=t.split("."),r=0;r<s.length;r++)n=s[r],r==s.length-1?e[n]=a:((void 0===e[n]||null==e[n])&&(e[n]={}),e=e[n])};this.updateWithParams=function(){if(this.parameters){var e=this.getParametersMap();for(var t in e)e.hasOwnProperty(t)&&updateObjectValue(this.active,t,e[t])}},this.resetFieldsStatus=function(){var e=setInterval(function(){$("input[ng-model*=\""+this.name+".\"]").is(":visible")?($("input[ng-model*=\""+this.name+".\"]:invalid:empty").removeClass("ng-invalid ng-invalid-required"),clearInterval(e)):$("input[ng-model*=\""+this.name+".\"].cronMultiSelect")&&clearInterval(e)},100)},this.noticeStatusChange=function(){this.changeTitle(),this.handleBeforeCallBack(this.onChangeStatus)},this.changeTitle=function(){if($("#starter").length&&$("#starter").attr("primary-datasource")===this.name){var e=this.translate.instant($rootScope.viewTitleOnly),t=$rootScope.systemName&&$rootScope.systemName.length?" - "+$rootScope.systemName:"";this.inserting?e+=" - "+this.translate.instant("Inserting"):this.editing&&(e+=" - "+this.translate.instant("Editing")),$("h1.title:first").text(e),window.document.title=e+t}},this.startInserting=function(e,t){this.retrieveDefaultValues(e,function(){if(this.active.__$id||(this.active.__$id=uuid()),this.children&&this.children.length){let e=this.getKeyValues(this.active);for(let t in e)e.hasOwnProperty(t)&&(null==e[t]||null==e[t])&&"_objectKey"==t&&(this.active[t]="$autogenerated$"+this.uuidv4())}this.inserting=!0,this.onStartInserting&&this.onStartInserting(),t&&t(this.active),this.events.creating&&this.callDataSourceEvents("creating",this.active),this.resetFieldsStatus(),this.noticeStatusChange()}.bind(this))},this.startEditing=function(e,t){if(e)this.active=this.copy(e),this.lastActive=e;else{if(0==this.data.length)return void this.startInserting(null,t);this.lastActive=this.active,this.active=this.copy(this.active)}this.editing=!0,t&&t(this.active),this.events.editing&&this.callDataSourceEvents("updating",this.active),this.resetFieldsStatus(),this.noticeStatusChange()},this.removeSilent=function(e,t,a){this.remove(e,null,!1,t,a,!0)},this.remove=function(e,t,a,n,s,r){this.busy=!0;var i=async function(e,t){e||(e=this.active);var r=this.getKeyValues(e,a);t=t||function(t,a,s){if(!s){for(var o=0;o<this.data.length;o++){var d;if(e.__$id&&this.data[o].__$id)d=this.data[o].__$id==e.__$id;else{var c=this.getKeyValues(this.data[o]);for(var l in r)if(r.hasOwnProperty(l))if(c[l]&&c[l]===r[l])d=!0;else{d=!1;break}}if(d){if(this.dependentLazyPost||this.batchPost){var u={};this.copy(this.data[o],u),u.__status="deleted",u.__originalIdx=o,this.events.memorydelete&&this.callDataSourceEvents("memorydelete",u),"inserted"!=this.data[o].__status&&(!this.postDeleteData&&(this.postDeleteData=[]),this.postDeleteData.push(u),this.hasMemoryData=!0,this.notifyPendingChanges(this.hasMemoryData))}this.data.splice(o,1);var p=o-1;0>p&&(p=0),p>this.data.length-1&&(p=this.data.length),this.data[p]?(this.active=this.data[p],this.cursor=p):(this.active=null,this.cursor=-1),this.onBackNomalState();break}}this.handleAfterCallBack(this.onAfterDelete),n&&n(e),this.events.delete&&a&&this.callDataSourceEvents("delete",e)}}.bind(this),(await this.handleBeforeCallBack(this.onBeforeDelete))&&((this.dependentLazyPost||this.batchPost)&&!a?t():service.remove(this.getDeletionURL(e,a),e).$promise.error(s).then(t))}.bind(this);if(!a&&!r&&this.deleteMessage&&0<this.deleteMessage.length){let a={title:this.translate.instant("yes"),value:function(){i(e,t)}},n={title:this.translate.instant("no"),primaryValue:"true",value:()=>{this.filter()}};window.cronapi.notification.confirmDialogAlert("warning","",this.deleteMessage,[n,a])}else i(e,t)},this.getKeyValues=function(rowData,forceOriginalKeys,useKeys){for(var keys=useKeys||this.keys,keyValues={},i=0;i<keys.length;i++){var key=keys[i],rowKey=null;try{rowKey=eval("rowData."+key)}catch(t){}keyValues[key]=rowKey}return keyValues}.bind(this),this.getFirstKeyValue=function(rowData,forceOriginalKeys){for(var keys=this.keys,keyValues={},i=0;i<this.keys.length;i++){var key=this.keys[i],rowKey=null;try{rowKey=eval("rowData."+key)}catch(t){}return rowKey}}.bind(this),this.objectIsEquals=function(e,t){var a=this.getKeyValues(e),n=this.getKeyValues(t);for(var s in a)if(a.hasOwnProperty(s)){if(!n.hasOwnProperty(s))return!1;if(a[s]!==n[s])return!1}return!0},this.hasNext=function(){return this.data&&this.cursor<this.data.length-1},this.hasPrevious=function(){return this.data&&0<this.cursor},this.order=function(e){this._savedProps.order=e},this.getActiveValues=function(){return this.active&&!this._activeValues&&$rootScope.$watch(function(){return this.active}.bind(this),function(){this._activeValues=this.getRowValues(this.active)}.bind(this),!0),this._activeValues},this.__defineGetter__("activeValues",function(){return _self.getActiveValues()}),this.getRowValues=function(e){var t=[];for(var a in e)e.hasOwnProperty(a)&&t.push(e[a]);return t},this.next=function(){return this.hasNext()||this.nextPage(),this.active=this.copy(this.data[++this.cursor],{}),this.active},this.nextPage=function(e){var t=(window.hostApp||"")+this.entity;return this.hasNextPage()?void(this.offset=1==this.apiVersion||-1==t.indexOf("/cronapi/")?parseInt(this.offset)+parseInt(this.rowsPerPage):parseInt(this.offset)+1,this._savedProps&&this._savedProps.params&&delete this._savedProps.params.$skip,this.fetch(this._savedProps,{success:function(a){(!a||a.length<parseInt(this.rowsPerPage))&&(1==this.apiVersion||-1==t.indexOf("/cronapi/"))&&(this.offset=parseInt(this.offset)-this.data.length),e&&e()},canceled:function(){e&&e()},error:function(){e&&e()}},!0)):void(e&&e())},this.prevPage=function(){this.append||this.preppend||(this.offset=parseInt(this.offset)-this.data.length,this._savedProps&&this._savedProps.params&&delete this._savedProps.params.$skip,0>this.offset?this.offset=0:0<=this.offset&&this.fetch(this._savedProps,{success:function(e){e&&0!==e.length||(this.offset=0)}},!0))},this.hasNextPage=function(){return this.hasMoreResults&&-1!=this.rowsPerPage},this.hasPrevPage=function(){return 0<this.offset&&!this.append&&!this.prepend},this.previous=function(){if(!this.hasPrevious())throw"Dataset Overflor Error";return this.active=this.copy(this.data[--this.cursor],{}),this.active},this.findObjInDs=function(e,t){var a=!1,n=null;if(null===e||void 0===e)return n;var s=null,r=null;if("object"==typeof e&&null!==e){var o;0<this.data.length&&(o=this.getKeyValues(this.data[0]));for(var d=0;d<this.data.length;d++){if(e.__$id&&this.data[d].__$id)a=e.__$id==this.data[d].__$id;else{var c=this.data[d];for(var l in o)a=!!(e.hasOwnProperty(l)&&e[l]===c[l])}if(a){s=d,r=this.copy(this.data[s],{});var u=this.getKeyValues(this.data[s]),p=!0;for(var l in u)if(void 0===u[l]){p=!1;break}p||this.fetchChildren()}}}else if(Array.isArray(this.keys))for(var d=0;d<this.data.length;d++)this.data[d][this.keys[0]]===e&&(s=d,r=this.copy(this.data[s],{}),a=!0);return null!==r&&(n=r,t&&(n={cursor:s,obj:r})),n},this.goTo=function(e){var t=this.findObjInDs(e,!0);return null===t?t:(this.cursor=t.cursor,this.active=t.obj,this.active)},this.getCursor=function(){return this.cursor},this.filter=function(e,t){var a=this.offset;this.offset=0,this.fetch({path:e},{beforeFill:function(){this.cleanup()},error:function(){this.offset=a},success:function(e){t&&t(e)}})},this.doSearchAll=function(e,t){this.searchTimeout=null;var a=this.offset;this.offset=0,this.fetch({params:{filter:"%"+e+"%",filterCaseInsensitive:!!t}},{beforeFill:function(){this.cleanup()},error:function(){this.offset=a}})},this.searchAll=function(e,t){this.searchTimeout&&(clearTimeout(this.searchTimeout),this.searchTimeout=null),this.searchTimeout=setTimeout(function(){this.doSearchAll(e,t)}.bind(this),500)},this.doSearch=function(e,t){this.searchTimeout=null;var a=this.offset;this.offset=0;var n;this.isOData()?(n={params:{$filter:e}},(null==e||0==e.length)&&(n={})):n={params:{filter:e,filterCaseInsensitive:!!t}},this.fetch(n,{beforeFill:function(){this.cleanup()},error:function(){this.offset=a}})},this.search=function(e,t){this.searchTimeout&&(clearTimeout(this.searchTimeout),this.searchTimeout=null),this.caseInsensitive=t,this.terms=e,this.searchTimeout=setTimeout(function(){this.doSearch(e,t)}.bind(this),500)},this.refresh=function(e,t,a){this.cleanup(),void 0===a&&(a=0),e.length>=a&&this.filter(t+"/"+e)},this.cleanup=function(e){e||(e={}),this.offset=0,this.rowsCount=-1,this.data.length=0,e.ignoreAtive||(this.cursor=-1,this.active={}),this.hasMoreResults=!1},this.current=function(){return this.active||this.data[0]},this.getLink=function(e){if(this.links)for(var t=0;t<this.links.length;t++)if(this.links[t].rel==e)return this.links[t].href},this.isOData=function(){return 0<this.entity.indexOf("odata")},this.isEventData=function(){return void 0!==this.onGET&&null!==this.onGET&&""!==this.onGET},this.isLocalData=function(){return 0==this.entity.indexOf("local://")},this.normalizeValue=function(e,t){return(null==t||null==t)&&(t=!1),window.oDataToObj(e,t)},this.normalizeObject=function(e){for(var t in e)if(e.hasOwnProperty(t)){var a=e[t];a&&("object"==typeof a?this.normalizeObject(a):e[t]=this.normalizeValue(a))}},this.normalizeData=function(e){if(e){delete e.__metadata;for(var t=0;t<e.length;t++)this.normalizeObject(e[t])}return e},this.getAllData=function(){var e=[];if(e=e.concat(this.data),this.memoryData)for(key in this.memoryData)if(this.memoryData.hasOwnProperty(key)){var t=this.memoryData[key];t.data&&(e=e.concat(t.data))}return this.postDeleteData&&(e=e.concat(this.postDeleteData)),e},this.getParametersMap=function(parentId){var parameters,obj,mapParams,map={};if(parentId){parameters=this.parametersExpression;for(var arr=eval(this.dependentLazyPost).getAllData(),i=0;i<arr.length;i++)if(arr[i].__$id==parentId){obj=arr[i];break}mapParams=this.getParametersMap()}else parameters=this.parameters;if(parameters&&0<parameters.length)for(var parts=parameters.split(";"),i=0;i<parts.length;i++){var part=parts[i],binary=part.split("=");if(2==binary.length){var value=binary[1];if(!parentId)map[binary[0]]=binary[1]?this.normalizeValue(value,!0):null;else if(binary[1].match(DEP_PATTERN)){var g=DEP_PATTERN.exec(value);if(-1!=g[1].indexOf(".active.")){var field=g[1].replace(this.dependentLazyPost+".active.","");obj&&(map[binary[0]]=obj[field])}else map[binary[0]]=mapParams[binary[0]]}else map[binary[0]]=mapParams[binary[0]]}}return map},this.setParameters=function(e){this.parameters=e,this.fetch({params:{}})},this.getParametersBatchExpression=function(parentId){var parameters,obj,expression="";parameters=this.parametersExpression;let ds=eval(this.dependentLazyPost);if(ds){var arr=ds.getAllData();if(ds.active&&ds.active.__$id==parentId)obj=ds.active;else for(var i=0;i<arr.length;i++)if(arr[i].__$id==parentId){obj=arr[i];break}}if(parameters&&0<parameters.length)for(var parts=parameters.split(";"),i=0;i<parts.length;i++){var part=parts[i],binary=part.split("=");if(2==binary.length){var value=binary[1];if(binary[1].match(DEP_PATTERN)){var g=DEP_PATTERN.exec(value);if(-1!=g[1].indexOf(".active.")){var field=g[1].replace(this.dependentLazyPost+".active.","");obj&&(""!=expression&&(expression+=","),expression=binary[0]+":$"+parentId+"."+field)}}}}return expression},this.removeSlash=function(e){return 0==e.indexOf("http://")?"http://"+e.substring(7).split("//").join("/"):0==e.indexOf("https://")?"https://"+e.substring(8).split("//").join("/"):e},this.setDataSourceEvents=function(e){this.events=e},this.addDataSourceEvents=function(e){for(var t in e)e.hasOwnProperty(t)&&(this.events[t]||(this.events[t]=[]),"[object Array]"!==Object.prototype.toString.call(this.events[t])&&(this.events[t]=[this.events[t]]),this.events[t].push(e[t]))},this.removeDataSourceEvents=function(e){for(var t in e)if(e.hasOwnProperty(t)){this.events[t]||(this.events[t]=[]),"[object Array]"!==Object.prototype.toString.call(this.events[t])&&(this.events[t]=[this.events[t]]);for(var a=[].concat(this.events[t]),n=0;n<a.length;n++)a[n]==e[t]&&this.events[t].splice(n,1)}},this.callDataSourceEvents=function(e){if(this.events){var t=this.events[e];if(t){"[object Array]"!==Object.prototype.toString.call(t)&&(t=[t]);for(var a=[],n=1;n<arguments.length;n++)a.push(arguments[n]);for(var s=[],n=0;n<t.length;n++)s.push(t[n]);for(var r=0;r<s.length;r++)try{s[r].apply(null,a)}catch(e){console.log("Error","Event no more exist in datasource")}}}},this.storeInMemory=function(e){this.memoryData||(this.memoryData={});var t={data:[],cursor:this.cursor,params:this.getParametersMap(),rowCount:this.getRowsCount()};t.data=deepCopy(this.data,t.data),this.memoryData[e]=t},this.restoreFromMemory=function(e){this.memoryData||(this.memoryData={});var t=this.memoryData[e];return t&&(this.cursor=t.cursor,this.rowsCount=t.rowCount),delete this.memoryData[e],deepCopy(t.data)},this.hasPendingChanges=function(){var e=this.hasMemoryData;return this.children&&$(this.children).each(function(){e=e||this.hasPendingChanges()}),e},this.isPostingBatchData=function(){var isPosting=!0==this.postingBatch;return this.dependentLazyPost&&(isPosting=isPosting||eval(this.dependentLazyPost).isPostingBatchData()),isPosting},this.fetchChildren=function(e){this.children?reduce(this.children,function(e,t){e.fetch({},function(){t()})}.bind(this),function(){e&&e()}.bind(this)):e&&e()};var splitExpression=function(e){var t,a=null;-1==e.indexOf("@=")?-1==e.indexOf("<=")?-1==e.indexOf(">=")?-1==e.indexOf(">")?-1==e.indexOf("<")?(a=e.trim().split("="),t="="):(a=e.trim().split("<"),t="<"):(a=e.trim().split(">"),t=">"):(a=e.trim().split(">="),t=">="):(a=e.trim().split("<="),t="<="):(a=e.trim().split("@="),t="=");var n=typeof this.normalizeValue(a[1],!0);if(this.isOData()){if("="==t&&"string"==n)return"startswith(tolower("+a[0]+"), "+a[1].toLowerCase()+")";if("="==t)return a[0]+" eq "+a[1];if("!="==t)return a[0]+" ne "+a[1];if(">"==t)return a[0]+" gt {"+a[1];if(">="==t)return a[0]+" ge "+a[1];if("<"==t)return a[0]+" lt "+a[1];if("<="==t)return a[0]+" le "+a[1]}else return"string"==n?a[0]+"@"+t+"%"+a[1]+"%":a[0]+t+a[1]}.bind(this),parseFilterExpression=function(e){var t="";if(e){var a=e.split(";"),n=!0;if(0<a.length)for(var s,r=0;r<a.length;r++)if(s=a[r].match(/[\w\d]+=.+/gm),!s){n=!1;break}if(n)for(var o,r=0;r<a.length;r++)o=splitExpression(a[r]),""!=t&&(t+=this.isOData()?" and ":";"),t+=o;else t=e}return t}.bind(this),getQueryOperator=function(e){return"="==e?" eq ":"!="==e?" ne ":">"==e?" gt ":">="==e?" ge ":"<"==e?" lt ":"<="==e?" le ":void 0}.bind(this),executeRight=function(right){var result="null";return null!=right&&null!=right&&(right.startsWith(":")||right.startsWith("datetimeoffset'")||right.startsWith("datetime'")?result=right:(result=eval(right),result instanceof Date?result="datetimeoffset'"+result.toISOString()+"'":"string"==typeof result?result="'"+result+"'":(void 0===result||null==result)&&(result="null"))),result}.bind(this);this.isEmpty=function(e){return""===e||void 0===e||null===e||"''"===e||"null"===e},this.getFieldFromSchema=function(e){if(this.schema)for(var t=0;t<this.schema.length;t++)if(this.schema[t].name===e)return this.schema[t].type;return null},this.parserCondition=function(e,t,a){var n="",s=e.type;if(t||(t="default"),e.args)for(var r=0;r<e.args.length;r++){var o=e.args[r],d=s;if(o.args&&0<o.args.length){var c=this.parserCondition(o,t);this.isEmpty(c)&&("ignore"==t||"clean"==t)?a&&(a.clean="clean"==t):!this.isEmpty(c)&&(a&&(a.count=a.count?a.count+1:1),""!=n&&(n+=" "+d.toLowerCase()+" "),n+="( "+c+" ) ")}else{var c=executeRight(o.right);if(this.isEmpty(c)&&("ignore"==t||"clean"==t||"wait"==t))a&&(a.clean="clean"==t,a.wait="wait"==t);else if(!this.isEmpty(c)){var l=!0,u="DateTime"===this.getFieldFromSchema(o.left),p=void 0;if(u&&-1===c.indexOf("datetime")&&(p=this.$scope.cronapi.dateTime.getMomentObj(c),l=p.isValid()),l)if(a&&(a.count=a.count?a.count+1:1),""!=n&&(n+=" "+d.toLowerCase()+" "),"%"==o.type)n+=this.isLocalData()?"contains("+o.left+", "+c.toLowerCase()+")":"substringof("+c.toLowerCase()+", tolower("+o.left+"))";else if(p){var g=p.toDate().getTimezoneOffset(),y=timeZoneOffset-g;p.add(y,"minutes"),n+=o.left+getQueryOperator(o.type)+"datetimeoffset'"+p.toISOString()+"'"}else n+=o.left+getQueryOperator(o.type)+c}}}return n.trim()}.bind(this),this.refreshData=function(e){if(this.lastFetch&&!this.hasMemoryData&&this.enabled&&!this.inserting&&!this.editing){window.Pace&&(window.Pace.options.ajax.trackWebSockets=!1,window.Pace.options.ajax.trackMethods=[]);var t=function(){window.Pace&&(window.Pace.options.ajax.trackWebSockets=!0,window.Pace.options.ajax.trackMethods=["PUT","POST","GET"]),e&&e()};this.lastFilter=null,this.lastFetch.fetchOptions=this.lastFetch.fetchOptions||{},this.lastFetch.fetchOptions.active=this.copy(this.active),this.lastFetch.fetchOptions.active.__$id=void 0,this.fetch(this.lastFetch.properties,{success:t,error:t},this.lastFetch.isNextOrPrev,this.lastFetch.fetchOptions,!0)}else e&&e()},this.startAutoRefresh=function(){0<this.autoRefresh&&setTimeout(function(){this.refreshData(function(){this.startAutoRefresh()}.bind(this))}.bind(this),this.autoRefresh)},this.isParentBusy=function(){return!!this.dependentLazyPost&&(eval(this.dependentLazyPost).busy||eval(this.dependentLazyPost).isParentBusy())},this.fetch=function(properties,callbacksObj,isNextOrPrev,fetchOptions,silent,fromVisibleEvent){fetchOptions||(fetchOptions={});let busy=this.busy,masterDetail=this.parameters&&0<this.parameters.length;if(fetchOptions.ignoreBusy&&(busy=!1),busy||this.postingBatch||!masterDetail&&this.isParentBusy())return void setTimeout(function(){this.fetch(properties,callbacksObj,isNextOrPrev,fetchOptions)}.bind(this),1e3);var callbacks=callbacksObj||{};this.lastFetch={properties:properties,isNextOrPrev:isNextOrPrev,fetchOptions:fetchOptions};var sucessHandler=function(data,headers,raw){var springVersion=!1;this.responseHeaders=headers||{};var total=-1;-1<this.entity.indexOf("//")&&0>this.entity.indexOf("://")&&(data=[]),raw||(data?"[object Array]"!==Object.prototype.toString.call(data)&&(data&&data.links&&"[object Array]"===Object.prototype.toString.call(data.content)?(this.links=data.links,data=data.content,springVersion=!0):this.isOData()?(total=parseInt(data.d.__count),data=data.d.results,this.normalizeData(data)):this.isLocalData()?(total=data.total_rows,data=data.rows,this.normalizeData(data)):data=[data]):data=[]);for(var n=0;n<data.length;n++)data[n].__$id||(data[n].__$id=uuid());if(!fetchOptions.lookup&&(this.fetched=!0,callbacks.beforeFill&&callbacks.beforeFill.apply(this,this.data),isNextOrPrev?(this.prepend&&Array.prototype.unshift.apply(this.data,data),this.append&&Array.prototype.push.apply(this.data,data),!this.prepend&&!this.append&&(Array.prototype.push.apply(this.data,data),!fetchOptions.ignoreAtive&&(0<this.data.length?fetchOptions.active?this.goTo(fetchOptions.active):(this.active=data[0],this.cursor=0):(this.active={},this.cursor=-1)))):(this.cleanup(fetchOptions),-1!=total&&(this.rowsCount=total),Array.prototype.push.apply(this.data,data),0<this.data.length&&!fetchOptions.ignoreAtive&&(fetchOptions.active?this.goTo(fetchOptions.active):(this.active=data[0],this.cursor=0))),this.columns=[],0<this.data.length))for(var i=0;i<this.data[0].length;i++)this.columns.push(this.getColumn(i));if(callbacks.success&&callbacks.success.call(this,data),!fetchOptions.lookup){this.events.read&&this.callDataSourceEvents("read",data),this.hasMoreResults=data.length>=this.rowsPerPage,springVersion&&(this.hasMoreResults=null!=this.getLink("next")),this.autoPost&&this.startAutoPost(),this.loaded=!0,this.loadedFinish=!0,this.handleAfterCallBack(this.onAfterFill);var thisDatasourceName=this.name;this.isOData()||$("datasource").each(function(idx,elem){var dependentBy=null,dependent=window[elem.getAttribute("name")];if(dependent&&""!==elem.getAttribute("dependent-by")&&null!=elem.getAttribute("dependent-by")){try{dependentBy=JSON.parse(elem.getAttribute("dependent-by"))}catch(ex){dependentBy=eval(elem.getAttribute("dependent-by"))}dependentBy?dependentBy.name==thisDatasourceName&&!dependent.filterURL&&eval(dependent.name).fetch():console.log("O dependente "+elem.getAttribute("dependent-by")+" do pai "+thisDatasourceName+" ainda n\xE3o existe.")}})}"insert"==this.startMode&&(this.startMode=null,this.startInserting()),"edit"==this.startMode&&(this.startMode=null,this.startEditing()),0<this.autoRefresh&&!this.autoRefreshStarted&&(this.autoRefreshStarted=!0,this.startAutoRefresh())}.bind(this);if(this.busy)return void(callbacks.canceled&&callbacks.canceled());if(-1<this.entity.indexOf("//")&&0>this.entity.indexOf("://"))return void(callbacks.canceled&&callbacks.canceled());if(!this.enabled)return this.cleanup(),void(callbacks.canceled&&callbacks.canceled());var props=properties||{};props.params=props.params||{};var resourceURL=(window.hostApp||"")+this.entity+(props.path||this.lastFilterParsed||""),filter="",order="",cleanData=!1,canProceed=!0;if(this.parameters&&0<this.parameters.length){var parsedParameters=fetchOptions.lookup?this.$interpolate(this.parametersExpression)(this.$scope):this.parameters;for(var parts=parsedParameters.split(";"),partsExpression=this.parametersExpression.split(";"),i=0;i<parts.length;i++){var part=parts[i],partExpression=partsExpression[i],binary=part.split("="),binaryExpression=partExpression.split("=");if(2==binary.length){var filterClause,g=DEP_PATTERN.exec(binaryExpression[1]);if(!((this.isEmpty(binary[1])||this.isAutoGeneratedValue(binary[1]))&&this.dependentLazyPost&&g[1]&&g[1].startsWith(this.dependentLazyPost+".")))this.isEmpty(binary[1])?("clean"==this.parametersNullStrategy||"default"==this.parametersNullStrategy)&&(filterClause="null",cleanData=!0):filterClause=this.getObjectAsString(this.normalizeValue(binary[1],!0));else if("clean"==this.parametersNullStrategy||"default"==this.parametersNullStrategy){cleanData=!0;var dds=eval(this.dependentLazyPost);filterClause=dds.active&&dds.active.__$id?eval(this.dependentLazyPost).active.__$id:"memory"}filterClause&&(filterClause=binary[0]+getQueryOperator("=")+filterClause,""!=filter&&(filter+=this.isOData()?" and ":";"),filter+=filterClause)}}}if(!canProceed)return void(callbacks.canceled&&callbacks.canceled());var urlParams;let waitData=!1;if(this.condition){try{var parsedCondition=fetchOptions.lookup?this.$interpolate(this.conditionExpression)(this.$scope):this.condition;var obj=JSON.parse(parsedCondition);if("object"==typeof obj){var resultData={};this.conditionOdata=obj.expression?this.parserCondition(obj.expression,this.parametersNullStrategy,resultData):this.parserCondition(obj,this.parametersNullStrategy,resultData);var filterCount=this.conditionExpression.match(/{{(?!null).*?}}/g).length;if(!cleanData&&resultData.clean&&(cleanData=!0),!cleanData&&resultData.wait&&(waitData=!0),cleanData||"one"!==this.loadDataStrategy||resultData.count&&!(1>resultData.count)||(cleanData=!0),!cleanData&&"all"===this.loadDataStrategy&&filterCount&&(!resultData.count||resultData.count<filterCount)&&(cleanData=!0),cleanData||"button"!==this.loadDataStrategy||"button"===fetchOptions.origin||(cleanData=!0),obj.params)for(var value,i=0;i<obj.params.length;i++)value=obj.params[i].fieldValue,2<=value.length&&"'"==value.charAt(0)&&"'"==value.charAt(value.length-1)&&(value=value.substring(1,value.length-1)),""!==value&&void 0!==value&&null!==value&&(props.params[obj.params[i].fieldName]=value)}else this.conditionOdata=this.condition}catch(t){console.log(t)}var conditionFilter=parseFilterExpression(this.conditionOdata);conditionFilter&&(""!=filter&&(filter+=this.isOData()?" and ":";"),filter+=conditionFilter)}if(this.orderBy)for(var orderField,orders=this.orderBy.split(";"),i=0;i<orders.length;i++)orderField=orders[i],orderField&&(""!=order&&(order+=this.isOData()?",":";"),order+=this.isOData()?orderField.replace("|ASC"," asc").replace("|DESC"," desc"):orderField);if(this.dependentLazyPost&&!this.parameters&&!this.condition&&!fromVisibleEvent&&eval(this.dependentLazyPost).active){var checkRequestId="",keyDependentLazyPost=this.getKeyValues(eval(this.dependentLazyPost).active);for(var key in keyDependentLazyPost){checkRequestId=keyDependentLazyPost[key];break}if(checkRequestId&&0<checkRequestId.length&&-1==resourceURL.indexOf(checkRequestId))return void(callbacks.canceled&&callbacks.canceled())}0<this.rowsPerPage&&(this.isOData()?((void 0===props.params.$top||null===props.params.$top)&&(props.params.$top=this.rowsPerPage),(void 0===props.params.$skip||null===props.params.$skip)&&(props.params.$skip=parseInt(this.offset)*parseInt(this.rowsPerPage)),props.params.$inlinecount="allpages"):1==this.apiVersion||-1==resourceURL.indexOf("/cronapi/")?(props.params.limit=this.rowsPerPage,props.params.offset=this.offset):(props.params.size=this.rowsPerPage,props.params.page=this.offset));var paramFilter=null;this.isOData()&&props.params.$filter&&(paramFilter=props.params.$filter),!this.isOData()&&props.params.filter&&(paramFilter=props.params.filter),paramFilter&&(filter&&""!=filter?this.isOData()?(filter+=" and (",filter+=paramFilter+")"):(filter+=";",filter+=paramFilter):filter=paramFilter);var paramOrder=null;this.isOData()&&props.params.$orderby&&(paramOrder=props.params.$orderby),!this.isOData()&&props.params.order&&(paramOrder=props.params.order),paramOrder&&(order=paramOrder),filter&&(this.isOData()?props.params.$filter=filter:props.params.filter=filter),order&&(this.isOData()?props.params.$orderby=order:props.params.order=order);var localSuccess;if(this.hasMemoryData&&filter){if(this.memoryData||(this.memoryData={}),this.lastFilter==filter)return void(callbacks.canceled&&callbacks.canceled());var id=filter,mem=this.memoryData[id];if(mem){this.storeInMemory(this.lastFilter);var data=this.restoreFromMemory(id);return this.lastFilter=filter,void sucessHandler(data,null,!0)}localSuccess=function(){this.storeInMemory(this.lastFilter)}.bind(this)}if(this.stopAutoPost(),this._savedProps=props,waitData)return void setTimeout(function(){fetchOptions.ignoreBusy=!0,this.fetch(properties,callbacksObj,isNextOrPrev,fetchOptions)}.bind(this),100);if(cleanData)return localSuccess&&localSuccess(),this.lastFilter=filter,void sucessHandler([],null,!0);this.busy=!0;var httpError=function(e){this.busy=!1,silent||this.handleError(e),callbacks.error&&callbacks.error.call(this,e)}.bind(this);let callService=function(){this.$promise=this.getService("GET")({method:"GET",url:this.removeSlash(resourceURL),params:props.params,headers:this.headers,filter:filter}).success(function(e,t,a){localSuccess&&localSuccess(),this.lastFilter=filter,this.busy=!1,a?sucessHandler(e,a()):sucessHandler(e,null)}.bind(this)).error(function(e,t,a,n){httpError(e,t,a,n)}.bind(this))}.bind(this);this.fetchOnVisible&&!this.parent.is(":visible")?this.holdServiceCall=callService:(this.holdServiceCall=void 0,callService())},this.getRowsCount=function(){return-1==this.rowsCount?this.data.length:this.rowsCount},this.notifyObservers=function(){for(var e in this.observers)if(this.observers.hasOwnProperty(e)){var t=this.observers[e];$timeout(function(){t.notify.call(t,this.active)}.bind(this),1)}},this.notify=function(e){if(e){var t=this.watchFilter;t=t.replace(/\{([A-z][A-z|0-9]*)\}/gim,function(t,a){return e.hasOwnProperty(a)?e[a]:""}),this.fetch({params:{q:t}})}},this.addObserver=function(e){this.observers.push(e)},this.sum=function(e){for(var t=0,a=0;a<this.data.length;a++)this.data[a][e]&&(t+=this.data[a][e]);return t},this.copy=function(e,t,a){if(null===e||"[object Object]"!==Object.prototype.toString.call(e))return e;for(var n in t=t||{},e)e.hasOwnProperty(n)&&-1==n.indexOf("$$")&&(t[n]=this.copy(e[n]));if(a)for(var s=0;s<this.keys.length;s++){var n=this.keys[s],r=t[n];(""==r||null==r)&&delete t[n]}return t};var deepCopyArray=function(e,t){if(null===e||"[object Array]"!==Object.prototype.toString.call(e))return e;t=t||[];for(var a=0;a<e.length;a++)t.push(deepCopy(e[a]));return t},deepCopy=function(e,t){if("[object Array]"===Object.prototype.toString.call(e))return deepCopyArray(e,t);if(null===e||"[object Object]"!==Object.prototype.toString.call(e))return e;for(var a in t=t||{},e)e.hasOwnProperty(a)&&(t[a]=deepCopy(e[a]));return t};if(this.startAutoPost=function(){this.unregisterDataWatch=$rootScope.$watch(function(){return this.data}.bind(this),function(e,t){if(!this.enabled)return void this.unregisterDataWatch();var a=e.length-t.length;if(0<a)for(var n=1;n<=a;n++)this.insert(e[e.length-n],function(){});else if(0>a)for(var s=this,r=t.filter(function(t){return 0==e.filter(function(e){return s.objectIsEquals(t,e)}).length}),n=0;n<r.length;n++)this.remove(r[n],function(){})}.bind(this))},this.stopAutoPost=function(){this.unregisterDataWatch&&(this.unregisterDataWatch(),this.unregisterDataWatch=void 0)},this.hasDataBuffered=function(){return!!(this.dependentBufferLazyPostData&&0<this.dependentBufferLazyPostData.length)},window.afterDatasourceCreate){var args=[$q,$timeout,$rootScope,$window,Notification];window.afterDatasourceCreate.apply(this,args)}this.init()};return this.storeDataset=function(e){this.datasets[e.name]=e},this.initDataset=function(props,scope,$compile,$parse,$interpolate,instanceId,translate){var endpoint=props.endpoint?props.endpoint:"",dts=new DataSet(props.name,scope,props.fetchOnVisible);$rootScope[props.name]=dts,window[props.name]=dts,$rootScope[props.name+".instanceId"]=instanceId;var defaultApiVersion=1;if(dts.entity=props.entity,window.dataSourceMap&&window.dataSourceMap[dts.entity])dts.entity=window.dataSourceMap[dts.entity].serviceUrlODATA||window.dataSourceMap[dts.entity].serviceUrl,"/"===dts.entity.charAt(0)&&(dts.entity=dts.entity.substr(1));else if(dts.isLocalData()){var path=dts.entity.substring(dts.entity.indexOf("//")+2,dts.entity.length).split("/");dts.localDBType=dts.entity.substring(0,dts.entity.indexOf("://")),dts.localDBName=path[0],dts.localDBStorage=path[1],dts.localDBVersion=path[2]||1}if(app&&app.config&&app.config.datasourceApiVersion&&(defaultApiVersion=app.config.datasourceApiVersion),dts.translate=translate,dts.apiVersion=props.apiVersion?parseInt(props.apiVersion):defaultApiVersion,dts.keys=props.keys&&0<props.keys.length?props.keys.split(","):[],dts.rowsPerPage=props.rowsPerPage?props.rowsPerPage:100,dts.append=props.append,dts.prepend=props.prepend,dts.endpoint=props.endpoint,dts.filterURL=props.filterURL,dts.autoPost=props.autoPost,dts.autoRefresh=props.autoRefresh,dts.deleteMessage=props.deleteMessage,dts.enabled=props.enabled,dts.offset=props.offset?props.offset:0,dts.onError=props.onError,dts.defaultNotSpecifiedErrorMessage=props.defaultNotSpecifiedErrorMessage,dts.onAfterFill=props.onAfterFill,dts.onBeforeCreate=props.onBeforeCreate,dts.onAfterCreate=props.onAfterCreate,dts.onBeforeUpdate=props.onBeforeUpdate,dts.onAfterUpdate=props.onAfterUpdate,dts.onBeforeDelete=props.onBeforeDelete,dts.onAfterDelete=props.onAfterDelete,dts.onChangeStatus=props.onChangeStatus,dts.onGET=props.onGet,dts.onPOST=props.onPost,dts.onPUT=props.onPut,dts.onDELETE=props.onDelete,dts.dependentBy=props.dependentBy,dts.parameters=props.parameters,dts.parametersNullStrategy=props.parametersNullStrategy,dts.parametersExpression=props.parametersExpression,dts.checkRequired=props.checkRequired,dts.batchPost=props.batchPost,dts.condition=props.condition,dts.conditionExpression=props.conditionExpression,dts.orderBy=props.orderBy,dts.schema=props.schema,dts.startMode=props.startMode,dts.lazy=props.lazy,dts.$compile=$compile,dts.$parse=$parse,dts.$interpolate=$interpolate,dts.loadDataStrategy=props.loadDataStrategy,props.dependentLazyPost&&0<props.dependentLazyPost.length&&(dts.dependentLazyPost=props.dependentLazyPost,eval(dts.dependentLazyPost).addDependentDatasource(dts)),dts.dependentLazyPostField=props.dependentLazyPostField,props.headers&&0<props.headers.length){dts.headers={"X-From-DataSource":"true"};for(var header,headers=props.headers.trim().split(";"),i=0;i<headers.length;i++)header=headers[i].split(":"),2===header.length&&(dts.headers[header[0]]=header[1])}if(this.storeDataset(dts),dts.allowFetch=!0,dts.dependentBy&&""!==dts.dependentBy&&""!==dts.dependentBy.trim()){dts.allowFetch=!1;var dependentBy=null;try{dependentBy=JSON.parse(dependentBy)}catch(ex){dependentBy=eval(dependentBy)}dependentBy&&dependentBy.loadedFinish&&(dts.allowFetch=!0)}if(!props.lazy&&dts.allowFetch&&"[object String]"!==Object.prototype.toString.call(props.watch)&&!props.filterURL){var queryObj={};setTimeout(function(){dts.fetch({params:queryObj},{success:function(e){e&&0<e.length&&(this.active=e[0],this.cursor=0)}})}.bind(this),0)}return props.lazy&&props.autoPost&&dts.startAutoPost(),props.watch&&"[object String]"===Object.prototype.toString.call(props.watch)&&(this.registerObserver(props.watch,dts),dts.watchFilter=props.watchFilter),props.filterURL&&0<props.filterURL.length&&dts.allowFetch&&dts.filter(props.filterURL),dts},this.registerObserver=function(e,t){this.datasets[e].addObserver(t)},this}]).directive("datasource",["DatasetManager","$timeout","$parse","Notification","$translate","$location","$rootScope","$compile","$interpolate",function(e,t,a,n,s,r,i,o){return{restrict:"E",priority:9999999,scope:!0,template:"",link:function(e,t){(function(e,t,a){$(e).each(function(){var e=$(this),n=$(document.createElement(a),{html:e.html()});$.each(this.attributes,function(){n.attr(this.name,this.value)});var s=e.data("events");if(s)for(var r in s)for(var i in s[r])n[r](s[r][i].handler);o(n)(t),e.replaceWith(n)})})(t,e,"cronapp-datasource")}}}]);let datasourceRepeat=1;app.directive("crnRepeat",["DatasetManager","$compile","$parse","$injector","$rootScope",function(e,t,a,n){return{restrict:"A",priority:9999998,terminal:!0,link:function(s,r,i){datasourceRepeat++,i.crnRepeat&&(s.data=e.datasets,s.data[i.crnRepeat]?s["datasourceRepeat"+datasourceRepeat]=s.data[i.crnRepeat]:(s["datasourceRepeat"+datasourceRepeat]={},s["datasourceRepeat"+datasourceRepeat].data=a(i.crnRepeat)(s)),r.attr("ng-repeat","rowData in datasourceRepeat"+datasourceRepeat+".data"));var o=r[0].tagName;t(r,null,9999998)(s),s.$watchCollection("datasourceRepeat"+datasourceRepeat+".data",function(){if("ion-slide"==o.toLowerCase()){var e=n.get("$ionicSlideBoxDelegate");e.update()}})}}}]).directive("crnDatasource",["DatasetManager","$parse","$rootScope",function(e,t){return{restrict:"A",scope:!0,priority:9999998,link:function(a,n,s){a.data=e.datasets,a.data[s.crnDatasource]?a.datasource=a.data[s.crnDatasource]:(a.datasource={},a.datasource.data=t(s.crnDatasource)(a))}}}]).directive("cronappDatasource",["DatasetManager","$timeout","$parse","Notification","$translate","$location","$rootScope","$compile","$interpolate",function(e,t,a,n,s,r,i,o,d){return{restrict:"E",scope:!0,template:"",link:function(c,l,u){initDatasource(c,l,u,e,t,a,n,s,r,i,o,d)}}}]);
+//v2.1.0
+var ISO_PATTERN  = new RegExp("(\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d\\.\\d+([+-][0-2]\\d:[0-5]\\d|Z))|(\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d([+-][0-2]\\d:[0-5]\\d|Z))|(\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d([+-][0-2]\\d:[0-5]\\d|Z))");
+var TIME_PATTERN  = new RegExp("PT(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)(?:\\.(\\d+)?)?S)?");
+var DEP_PATTERN  = new RegExp("\\{\\{(.*?)\\|raw\\}\\}");
+var HTTP_STATUS = new RegExp("HTTP\\/1\\.1 (\\d+) (.*)");
+var DS_ID = new RegExp("[\\w\\_\\.\\d]+");
+
+
+(function ($) {
+    var defaults = {
+        callback: function () { },
+        runOnLoad: true,
+        frequency: 100,
+        previousVisibility : null
+    };
+
+    var methods = {};
+    methods.checkVisibility = function (element, options) {
+        if (jQuery.contains(document, element[0])) {
+            var previousVisibility = options.previousVisibility;
+            var isVisible = element.is(':visible');
+            options.previousVisibility = isVisible;
+            var initialLoad = previousVisibility == null
+            if (initialLoad) {
+                if (options.runOnLoad) {
+                    options.callback(element, isVisible, initialLoad);
+                }
+            } else if (previousVisibility !== isVisible) {
+                options.callback(element, isVisible, initialLoad);
+            }
+
+            setTimeout(function() {
+                methods.checkVisibility(element, options);
+            }, options.frequency);
+        }
+    };
+
+    $.fn.visibilityChanged = function (options) {
+        var settings = $.extend({}, defaults, options);
+        return this.each(function () {
+            methods.checkVisibility($(this), settings);
+        });
+    };
+})(jQuery);
+
+var initDatasource = function(scope, element, attrs, DatasetManager, $timeout, $parse, Notification, $translate, $location, $rootScope, $compile, $interpolate) {
+  var instanceId =  parseInt(Math.random() * 9999);
+  //Add in header the path from the request was executed
+  var originPath = "origin-path:" + $location.path();
+  if (attrs.headers === undefined || attrs.headers === null) {
+    attrs.headers = originPath;
+  } else {
+    attrs.headers = attrs.headers.concat(";", originPath);
+  }
+
+  var props = {
+    name: attrs.name,
+    entity: attrs.entity,
+    apiVersion: attrs.apiVersion,
+    enabled: (attrs.hasOwnProperty('enabled')) ? (attrs.enabled === "true") : true,
+    keys: attrs.keys,
+    endpoint: attrs.endpoint,
+    lazy: attrs.lazy === "true",
+    append: !attrs.hasOwnProperty('append') || attrs.append === "true",
+    prepend: (attrs.hasOwnProperty('prepend') && attrs.prepend === "") || attrs.prepend === "true",
+    watch: attrs.watch,
+    rowsPerPage: attrs.rowsPerPage,
+    offset: attrs.offset,
+    filterURL: attrs.filter,
+    watchFilter: attrs.watchFilter,
+    deleteMessage: attrs.deleteMessage || attrs.deleteMessage === "" ? attrs.deleteMessage : $translate.instant('General.RemoveData'),
+    headers: attrs.headers,
+    autoPost: attrs.autoPost === "true",
+    autoRefresh: (attrs.autoRefresh !== undefined && attrs.autoRefresh !== null) ? attrs.autoRefresh : 0,
+    onError: attrs.onError,
+    onAfterFill: attrs.onAfterFill,
+    onBeforeCreate: attrs.onBeforeCreate,
+    onAfterCreate: attrs.onAfterCreate,
+    onBeforeUpdate: attrs.onBeforeUpdate,
+    onAfterUpdate: attrs.onAfterUpdate,
+    onBeforeDelete: attrs.onBeforeDelete,
+    onAfterDelete: attrs.onAfterDelete,
+    onChangeStatus: attrs.onChangeStatus,
+    onGet: attrs.onGet,
+    onPost: attrs.onPost,
+    onPut: attrs.onPut,
+    onDelete: attrs.onDelete,
+    defaultNotSpecifiedErrorMessage: $translate.instant('General.ErrorOnServerCommunication'),
+    dependentBy: attrs.dependentBy,
+    dependentLazyPost: attrs.dependentLazyPost,
+    batchPost: attrs.batchpost === "true",
+    dependentLazyPostField: attrs.dependentLazyPostField,
+    parameters: attrs.parameters,
+    parametersNullStrategy: attrs.parametersNullStrategy?attrs.parametersNullStrategy:"default",
+    parametersExpression: $(element).attr('parameters'),
+    conditionExpression: $(element).attr('condition'),
+    condition: attrs.condition,
+    orderBy: attrs.orderBy,
+    loadDataStrategy: attrs.loadDataStrategy,
+    schema: attrs.schema ? JSON.parse(attrs.schema) : undefined,
+    checkRequired: !attrs.hasOwnProperty('checkrequired') || attrs.checkrequired === "" || attrs.checkrequired === "true",
+    fetchOnVisible: (attrs.fetchOnVisible !== undefined && attrs.fetchOnVisible !== null) ? (attrs.fetchOnVisible === 'true') : false
+  }
+
+  var firstLoad = {
+    filter: true,
+    entity: true,
+    enabled: true,
+    parameters: true
+  }
+
+  var urlParameters;
+  if (scope.params) {
+    for (var paramKey in scope.params) {
+      if (scope.params.hasOwnProperty(paramKey)) {
+        var value = scope.params[paramKey];
+        if (paramKey.startsWith("$"+attrs.name+".")) {
+          var key = paramKey.split(".");
+          if (key.length == 2) {
+            if (key[1] == "$filterMode") {
+              props.startMode = value;
+            } else {
+              if (urlParameters) {
+                urlParameters += ";";
+              } else {
+                urlParameters = "";
+              }
+              if (!isNaN(value)) {
+                urlParameters += key[1]+"="+value;
+              } else {
+                urlParameters += key[1]+"='"+value+"'";
+              }
+
+
+            }
+          }
+
+        }
+      }
+    }
+
+    if (urlParameters) {
+      props.parameters = urlParameters;
+      props.parametersExpression = urlParameters;
+    }
+  }
+
+  var instanceId =  parseInt(Math.random() * 9999);
+  var datasource = DatasetManager.initDataset(props, scope, $compile, $parse, $interpolate, instanceId, $translate);
+  var timeoutPromise;
+
+  attrs.$observe('filter', function(value) {
+    if (datasource.isPostingBatchData()) {
+      return;
+    }
+
+    if (!firstLoad.filter) {
+      // Stop the pending timeout
+      $timeout.cancel(timeoutPromise);
+
+      // Start a timeout
+      timeoutPromise = $timeout(function() {
+        if (datasource.events.overRideRefresh) {
+          datasource.callDataSourceEvents('overRideRefresh', 'filter', value);
+        } else {
+          datasource.filter(value, function (data) {
+            if (datasource.events.refresh) {
+              datasource.callDataSourceEvents('refresh', data, 'filter');
+            }
+          });
+        }
+        datasource.lastFilterParsed = value;
+      }, 100);
+    } else {
+      $timeout(function() {
+        firstLoad.filter = false;
+      }, 0);
+    }
+  });
+
+  if (!urlParameters) {
+    attrs.$observe('parameters', function(value) {
+      if (datasource.isPostingBatchData()) {
+        return;
+      }
+
+      if (datasource.parameters != value) {
+        datasource.parameters = value;
+
+        $timeout.cancel(timeoutPromise);
+        timeoutPromise =$timeout(function() {
+          datasource.callDataSourceEvents('changeDependency', 'parameters', datasource.parameters);
+
+          if (datasource.events.overRideRefresh) {
+            datasource.callDataSourceEvents('overRideRefresh', 'parameters', datasource.parameters);
+          } else {
+            datasource.fetch({
+              params: {}
+            }, {
+              success: function (data) {
+                if (datasource.events.refresh) {
+                  datasource.callDataSourceEvents('refresh', data, 'parameters');
+                }
+              }
+            });
+          }
+        }, 0);
+
+      }
+    });
+  }
+
+  let calculate = {
+    lastCondition: undefined,
+    timeForCondition: undefined,
+    typingSpeedLimit: 1000,
+    maxWaitingValue: 1000,
+    wait: function() {
+      this.timeForCondition = 0;
+      if (this.lastCondition) {
+        let elapsedTime = new Date().getTime() - this.lastCondition.getTime();
+        if (elapsedTime < this.typingSpeedLimit) {
+          this.timeForCondition = this.maxWaitingValue;
+        }
+      }
+      this.lastCondition = new Date();
+      return this.timeForCondition;
+    }
+  };
+
+  attrs.$observe('condition', function(value) {
+    if (datasource.isPostingBatchData()) {
+      return;
+    }
+
+    if (datasource.condition != value) {
+      datasource.condition = value;
+
+      if (datasource.loadDataStrategy === "button") {
+        return;
+      }
+
+      $timeout.cancel(timeoutPromise);
+      timeoutPromise =$timeout(function() {
+        datasource.callDataSourceEvents('changeDependency', 'condition', datasource.condition);
+
+        if (datasource.events.overRideRefresh) {
+          datasource.callDataSourceEvents('overRideRefresh', 'condition', datasource.condition);
+        } else {
+          datasource.fetch({
+            params: {}
+          }, {
+            success: function (data) {
+              if (datasource.events.refresh) {
+                datasource.callDataSourceEvents('refresh', data, 'condition');
+              }
+            }
+          });
+        }
+      }, calculate.wait());
+
+    }
+  });
+
+  attrs.$observe('enabled', function(value) {
+    var boolValue = (value === "true");
+
+    if (datasource.enabled != boolValue) {
+      datasource.enabled = boolValue;
+
+      if (datasource.enabled) {
+        $timeout.cancel(timeoutPromise);
+        timeoutPromise =$timeout(function () {
+          if (datasource.events.overRideRefresh) {
+            datasource.callDataSourceEvents('overRideRefresh', 'enabled', datasource.parameters);
+          } else {
+            datasource.fetch({
+                params: {}
+              },
+              {
+                success: function (data) {
+                  if (datasource.events.refresh) {
+                    datasource.callDataSourceEvents('refresh', data, 'enabled');
+                  }
+                }
+              }
+            );
+          }
+        }, 200);
+      }
+    }
+  });
+
+  attrs.$observe('entity', function(value) {
+    datasource.entity = value;
+
+    if (datasource.entity.match(DS_ID)) {
+      datasource.entity = "api/cronapi/odata/v2/" + datasource.entity.replaceAll(".", "/");
+    }
+
+    if (!firstLoad.entity) {
+      // Only fetch if it's not the first load
+
+      $timeout.cancel(timeoutPromise);
+
+      timeoutPromise = $timeout(function() {
+        datasource.fetch({
+            params: {}
+          },
+          {
+            success : function (data) {
+              if (datasource.events.refresh) {
+                datasource.callDataSourceEvents('refresh', data, 'entity');
+              }
+            }
+          }
+        );
+      }, 200);
+    } else {
+      $timeout(function() {
+        firstLoad.entity = false;
+      });
+    }
+  });
+  scope.$on('$destroy', function() {
+    if ($rootScope[attrs.name] && $rootScope[attrs.name+".instanceId"] == instanceId) {
+      $rootScope[attrs.name].destroy();
+      delete window[attrs.name];
+      delete $rootScope[attrs.name];
+      delete  $rootScope[attrs.name+".instanceId"];
+    }
+  });
+};
+
+angular.module('datasourcejs', [])
+
+/**
+ * Global factory responsible for managing all datasets
+ */
+.factory('DatasetManager', ['$http', '$q', '$timeout', '$rootScope', '$window', 'Notification', function($http, $q, $timeout, $rootScope, $window, Notification) {
+  // Global dataset List
+  this.datasets = {};
+
+  const $httpLegacy = (config) => {
+    let http = $http(config);
+    return {
+      success: function (thenCallback) {
+        http.then(response => {
+          thenCallback(response.data, response.status, response.headers, response.config);
+        });
+        return this;
+      },
+      error: function (catchCallback) {
+        http.catch(response => {
+          catchCallback(response.data, response.status, response.headers, response.config);
+        });
+        return this;
+      }
+    }
+  };
+  /**
+   * Class representing a single dataset
+   */
+  var DataSet = function(name, scope, fetchOnVisible) {
+
+    var NO_IMAGE_UPLOAD = "data:image/svg+xml;utf8;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pgo8IS0tIEdlbmVyYXRvcjogQWRvYmUgSWxsdXN0cmF0b3IgMTYuMC4wLCBTVkcgRXhwb3J0IFBsdWctSW4gLiBTVkcgVmVyc2lvbjogNi4wMCBCdWlsZCAwKSAgLS0+CjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgdmVyc2lvbj0iMS4xIiBpZD0iQ2FwYV8xIiB4PSIwcHgiIHk9IjBweCIgd2lkdGg9IjEyOHB4IiBoZWlnaHQ9IjEyOHB4IiB2aWV3Qm94PSIwIDAgNDQuNTAyIDQ0LjUwMiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgNDQuNTAyIDQ0LjUwMjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8Zz4KCTxnPgoJCTxwYXRoIGQ9Ik05Ljg2MiwzNS42MzhoMjQuNzc5YzAtNS41NDYtMy44NjMtMTAuMjAzLTkuMTEzLTExLjYwNGMyLjc1LTEuMjQ4LDQuNjY4LTQuMDEzLDQuNjY4LTcuMjI5ICAgIGMwLTQuMzg4LTMuNTU5LTcuOTQyLTcuOTQyLTcuOTQyYy00LjM4NywwLTcuOTQzLDMuNTU3LTcuOTQzLDcuOTQyYzAsMy4yMTksMS45MTYsNS45OCw0LjY2OCw3LjIyOSAgICBDMTMuNzI1LDI1LjQzNSw5Ljg2MiwzMC4wOTIsOS44NjIsMzUuNjM4eiIgZmlsbD0iIzkxOTE5MSIvPgoJCTxwYXRoIGQ9Ik0xLjUsMTQuMTY5YzAuODI4LDAsMS41LTAuNjcyLDEuNS0xLjVWNC4zMzNoOC4zMzZjMC44MjgsMCwxLjUtMC42NzIsMS41LTEuNWMwLTAuODI4LTAuNjcyLTEuNS0xLjUtMS41SDIuNzc1ICAgIEMxLjI0NCwxLjMzMywwLDIuNTc3LDAsNC4xMDh2OC41NjFDMCwxMy40OTcsMC42NywxNC4xNjksMS41LDE0LjE2OXoiIGZpbGw9IiM5MTkxOTEiLz4KCQk8cGF0aCBkPSJNNDEuNzI3LDEuMzMzaC04LjU2MmMtMC44MjcsMC0xLjUsMC42NzItMS41LDEuNWMwLDAuODI4LDAuNjczLDEuNSwxLjUsMS41aDguMzM2djguMzM2YzAsMC44MjgsMC42NzMsMS41LDEuNSwxLjUgICAgczEuNS0wLjY3MiwxLjUtMS41di04LjU2QzQ0LjUwMiwyLjU3OSw0My4yNTYsMS4zMzMsNDEuNzI3LDEuMzMzeiIgZmlsbD0iIzkxOTE5MSIvPgoJCTxwYXRoIGQ9Ik00My4wMDIsMzAuMzMzYy0wLjgyOCwwLTEuNSwwLjY3Mi0xLjUsMS41djguMzM2aC04LjMzNmMtMC44MjgsMC0xLjUsMC42NzItMS41LDEuNXMwLjY3MiwxLjUsMS41LDEuNWg4LjU2ICAgIGMxLjUzLDAsMi43NzYtMS4yNDYsMi43NzYtMi43NzZ2LTguNTZDNDQuNTAyLDMxLjAwNSw0My44MywzMC4zMzMsNDMuMDAyLDMwLjMzM3oiIGZpbGw9IiM5MTkxOTEiLz4KCQk8cGF0aCBkPSJNMTEuMzM2LDQwLjE2OUgzdi04LjMzNmMwLTAuODI4LTAuNjcyLTEuNS0xLjUtMS41Yy0wLjgzLDAtMS41LDAuNjcyLTEuNSwxLjV2OC41NmMwLDEuNTMsMS4yNDQsMi43NzYsMi43NzUsMi43NzZoOC41NjEgICAgYzAuODI4LDAsMS41LTAuNjcyLDEuNS0xLjVTMTIuMTY1LDQwLjE2OSwxMS4zMzYsNDAuMTY5eiIgZmlsbD0iIzkxOTE5MSIvPgoJPC9nPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+Cjwvc3ZnPgo=";
+
+    var NO_FILE_UPLOAD = "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pgo8IS0tIEdlbmVyYXRvcjogQWRvYmUgSWxsdXN0cmF0b3IgMTYuMC4wLCBTVkcgRXhwb3J0IFBsdWctSW4gLiBTVkcgVmVyc2lvbjogNi4wMCBCdWlsZCAwKSAgLS0+CjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgdmVyc2lvbj0iMS4xIiBpZD0iQ2FwYV8xIiB4PSIwcHgiIHk9IjBweCIgd2lkdGg9IjUxMnB4IiBoZWlnaHQ9IjUxMnB4IiB2aWV3Qm94PSIwIDAgNTQ4LjE3NiA1NDguMTc2IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA1NDguMTc2IDU0OC4xNzY7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPGc+Cgk8cGF0aCBkPSJNNTI0LjMyNiwyOTcuMzUyYy0xNS44OTYtMTkuODktMzYuMjEtMzIuNzgyLTYwLjk1OS0zOC42ODRjNy44MS0xMS44LDExLjcwNC0yNC45MzQsMTEuNzA0LTM5LjM5OSAgIGMwLTIwLjE3Ny03LjEzOS0zNy40MDEtMjEuNDA5LTUxLjY3OGMtMTQuMjczLTE0LjI3Mi0zMS40OTgtMjEuNDExLTUxLjY3NS0yMS40MTFjLTE4LjA4MywwLTMzLjg3OSw1LjkwMS00Ny4zOSwxNy43MDMgICBjLTExLjIyNS0yNy40MS0yOS4xNzEtNDkuMzkzLTUzLjgxNy02NS45NWMtMjQuNjQ2LTE2LjU2Mi01MS44MTgtMjQuODQyLTgxLjUxNC0yNC44NDJjLTQwLjM0OSwwLTc0LjgwMiwxNC4yNzktMTAzLjM1Myw0Mi44MyAgIGMtMjguNTUzLDI4LjU0NC00Mi44MjUsNjIuOTk5LTQyLjgyNSwxMDMuMzUxYzAsMi40NzQsMC4xOTEsNi41NjcsMC41NzEsMTIuMjc1Yy0yMi40NTksMTAuNDY5LTQwLjM0OSwyNi4xNzEtNTMuNjc2LDQ3LjEwNiAgIEM2LjY2MSwyOTkuNTk0LDAsMzIyLjQzLDAsMzQ3LjE3OWMwLDM1LjIxNCwxMi41MTcsNjUuMzI5LDM3LjU0NCw5MC4zNThjMjUuMDI4LDI1LjAzNyw1NS4xNSwzNy41NDgsOTAuMzYyLDM3LjU0OGgzMTAuNjM2ICAgYzMwLjI1OSwwLDU2LjA5Ni0xMC43MTEsNzcuNTEyLTMyLjEyYzIxLjQxMy0yMS40MDksMzIuMTIxLTQ3LjI0NiwzMi4xMjEtNzcuNTE2QzU0OC4xNzIsMzM5Ljk0NCw1NDAuMjIzLDMxNy4yNDgsNTI0LjMyNiwyOTcuMzUyICAgeiBNMzYyLjcyOSwyODkuNjQ4Yy0xLjgxMywxLjgwNC0zLjk0OSwyLjcwNy02LjQyLDIuNzA3aC02My45NTN2MTAwLjUwMmMwLDIuNDcxLTAuOTAzLDQuNjEzLTIuNzExLDYuNDIgICBjLTEuODEzLDEuODEzLTMuOTQ5LDIuNzExLTYuNDIsMi43MTFoLTU0LjgyNmMtMi40NzQsMC00LjYxNS0wLjg5Ny02LjQyMy0yLjcxMWMtMS44MDQtMS44MDctMi43MTItMy45NDktMi43MTItNi40MlYyOTIuMzU1ICAgSDE1NS4zMWMtMi42NjIsMC00Ljg1My0wLjg1NS02LjU2My0yLjU2M2MtMS43MTMtMS43MTQtMi41NjgtMy45MDQtMi41NjgtNi41NjZjMC0yLjI4NiwwLjk1LTQuNTcyLDIuODUyLTYuODU1bDEwMC4yMTMtMTAwLjIxICAgYzEuNzEzLTEuNzE0LDMuOTAzLTIuNTcsNi41NjctMi41N2MyLjY2NiwwLDQuODU2LDAuODU2LDYuNTY3LDIuNTdsMTAwLjQ5OSwxMDAuNDk1YzEuNzE0LDEuNzEyLDIuNTYyLDMuOTAxLDIuNTYyLDYuNTcxICAgQzM2NS40MzgsMjg1LjY5NiwzNjQuNTM1LDI4Ny44NDUsMzYyLjcyOSwyODkuNjQ4eiIgZmlsbD0iI2NlY2VjZSIvPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+Cjwvc3ZnPgo=";
+
+    // Publiic members
+    this.fetchOnVisible = fetchOnVisible;
+    this.parent = $("[name='"+name+"']").parent();
+
+    if (this.fetchOnVisible) {
+      this.parent.visibilityChanged({
+          callback: function(element, visible, initialLoad) {
+            if (visible && this.holdServiceCall) {
+              this.holdServiceCall();
+            }
+          }.bind(this),
+          runOnLoad: false,
+          frequency: 100
+      });
+    }
+
+    this.Notification = Notification;
+    this.$scope = scope;
+    this.noImageUpload = NO_IMAGE_UPLOAD;
+    this.noFileUpload = NO_FILE_UPLOAD;
+
+    this.$apply = function(fc) {
+      scope.safeApply(fc);
+    }.bind(scope);
+
+    this.columns = [];
+    this.data = [];
+    this.name = name;
+    this.keys = [];
+    this.enabled = true;
+    this.endpoint = null;
+    this.active = {};
+    this.inserting = false;
+    this.editing = false;
+    this.fetchSize = 2;
+    this.observers = [];
+    this.rowsPerPage = null;
+    this.append = true;
+    this.headers = null;
+    this.responseHeaders = null;
+    this._activeValues = null;
+    this.errorMessage = "";
+    this.onError = null;
+    this.links = null;
+    this.loadedFinish = null;
+    this.lastFilterParsed = null;
+    this.rowsCount = -1;
+    this.events = {};
+
+    this.busy = false;
+    this.cursor = 0;
+    this._savedProps;
+    this.hasMoreResults = false;
+    this.loaded = false;
+    this.unregisterDataWatch = null;
+    this.dependentBufferLazyPostData = null;
+    this.lastAction = null; //TRM
+    this.dependentData = null; //TRM
+    this.hasMemoryData = false;
+    this.batchPost= false;
+    this.caseInsensitive = null;
+    this.terms = null;
+    this.checkRequired = true;
+    this.schema;
+    var _self = this;
+    var service = null;
+
+    this.odataFile = [];
+
+    function reverseArr(input) {
+      if (input) {
+        var ret = new Array;
+        for (var i = input.length - 1; i >= 0; i--) {
+          ret.push(input[i]);
+        }
+        return ret;
+      } else {
+        return [];
+      }
+    }
+
+    this.destroy = function() {
+    }
+
+    // Public methods
+
+    /**
+     * Initialize a single datasource
+     */
+    this.init = function() {
+
+      var dsScope = this;
+
+      // Get the service resource
+      service = {
+        save: function(object) {
+          return this.call(_self.entity, "POST", object, true);
+        },
+        update: function(url, object) {
+          return this.call(url, "PUT", object, false);
+        },
+        remove: function(url, object) {
+          return this.call(url, "DELETE", object, true);
+        },
+        call: function(url, verb, obj, applyScope) {
+          var object = {};
+          var isCronapiQuery = (url.indexOf('/cronapi/query/') >= 0);
+
+          if (isCronapiQuery) {
+            object.inputs = [obj];
+
+            var fields = {};
+
+            var _callback;
+            var _callbackError;
+            _self.busy = true;
+            url = url.replace('/specificSearch', '');
+            url = url.replace('/generalSearch', '');
+
+            if (_self && _self.$scope && _self.$scope.vars) {
+              fields["vars"] = {};
+              for (var attr in _self.$scope.vars) {
+                fields.vars[attr] = _self.$scope.vars[attr];
+              }
+            }
+
+            for (var key in _self.$scope) {
+              if (_self.$scope[key] && _self.$scope[key].constructor && _self.$scope[key].constructor.name == "DataSet") {
+                fields[key] = {};
+                fields[key].active = _self.$scope[key].active;
+              }
+            }
+
+            object.fields = fields;
+          } else {
+            object = obj;
+          }
+
+          var cloneObject = {};
+          _self.copy(object, cloneObject, true);
+          delete cloneObject.__original;
+          delete cloneObject.__status;
+          delete cloneObject.__originalIdx;
+          delete cloneObject.__sender;
+          delete cloneObject.__$id;
+          delete cloneObject.__parentId;
+          delete cloneObject.$$hashKey;
+          delete cloneObject.__fromMemory;
+          delete cloneObject.__odatafiles;
+          delete cloneObject.__$masterExpression;
+
+          for (var key in cloneObject) {
+            if (key.indexOf('__odataFile_') > -1) {
+              cloneObject[key.replace('__odataFile_','')] = undefined;
+              delete cloneObject[key];
+            }
+          }
+
+          for (var key in cloneObject) {
+            if (cloneObject.hasOwnProperty(key)) {
+              let value = cloneObject[key];
+              if (_self.isAutoGeneratedValue(value)) {
+                delete cloneObject[key];
+              }
+            }
+          }
+
+          var success = function(data, status, headers, config, batchPostponed) {
+            _self.busy = false;
+            if (_callback) {
+              if (_self.isOData()) {
+                if (data.d != null && data.d.result != null) {
+                  _self.normalizeData(data.d.result);
+                  _callback(data.d.result, true, batchPostponed);
+                } else if (data.d != null) {
+                  _self.normalizeObject(data.d);
+                  _callback(data.d, true, batchPostponed);
+                } else {
+                  _callback(data, true, batchPostponed);
+                }
+              } else {
+                _callback(isCronapiQuery?data.value:data, true, batchPostponed);
+              }
+            }
+            if (isCronapiQuery || _self.isOData()) {
+              var commands = data;
+              if (_self.isOData()) {
+                commands = {};
+                commands.commands = data.__callback;
+                _self.normalizeData(commands.commands);
+              }
+              _self.$scope.cronapi.evalInContext(JSON.stringify(commands));
+            }
+          };
+
+          var ds = _self.getParentDatasource();
+          let batchObj = ds.getBatchDataItem(object);
+          if (batchObj && batchObj.result) {
+            let idx = ds.batchServiceData.indexOf(batchObj);
+            ds.batchServiceData.splice(idx, 1);
+            $timeout(() => {
+              success(batchObj.result);
+            },0);
+
+            this.$promise = {};
+          } else {
+            // Get an ajax promise
+            this.$promise = _self.getService(verb, object)({
+              method: verb,
+              url: _self.removeSlash(((window.hostApp || "") + url)),
+              data: verb!='DELETE'?((object) ? JSON.stringify(cloneObject) : null):null,
+              headers: _self.headers,
+              rawData: (object) ? cloneObject : null,
+              originalObject: (object) ? object : null,
+              urlPart: url
+            }).success(success).error(function (data, status, headers, config) {
+              _self.busy = false;
+              var msg;
+              if (_self.isOData()) {
+                msg = data.error.message.value;
+              } else {
+                msg = isCronapiQuery && data.value ? data.value : data
+              }
+              _self.handleError(msg);
+              if (_callbackError) {
+                _callbackError(msg);
+              }
+            });
+          }
+
+          this.$promise.then = function (callback) {
+            _callback = callback;
+            return this;
+          }
+
+          this.$promise.error = function (callback) {
+            _callbackError = callback;
+            return this;
+          }
+          return this;
+        }
+      }
+
+      this.isAutoGeneratedValue = function(value) {
+        return typeof value === 'string'
+            && value.length > 10
+            && (value.startsWith("$autogenerated$") || value.substring(1).startsWith("$autogenerated$"));
+      }
+
+      this.getIndexedDB = function(properties) {
+        if (!window.indexedDB) {
+          window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+          window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction;
+          window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+        }
+
+        return  {
+          properties: properties,
+          successCallback: null,
+          errorCallback: null,
+          type: null,
+          args: null,
+          success: function(successCallback) {
+            this.successCallback = successCallback;
+            return this;
+          },
+
+          error: function(errorCallback) {
+            this.errorCallback = errorCallback;
+            return this;
+          },
+
+          post: function() {
+            this.type = 'put';
+            this.args = arguments;
+            return this;
+          },
+
+          put: function() {
+            this.type = 'put';
+            this.args = arguments;
+            return this;
+          },
+
+          delete: function() {
+            this.type = 'delete';
+            this.args = arguments;
+            return this;
+          },
+
+          get: function() {
+            this.type = 'getAll';
+            this.args = arguments;
+            return this;
+          },
+
+          call: function() {
+            request = window.indexedDB.open(this.properties.dbname, this.properties.dbversion||1);
+
+            request.onerror = function (event) {
+              if (this.errorCallback) {
+                this.errorCallback(event);
+              }
+            }.bind(this);
+
+            request.onsuccess = function (event) {
+              this.proceed(event.target.result);
+            }.bind(this);
+
+            request.onupgradeneeded = function (event) {
+              var db = event.target.result;
+
+              var objectStore = db.createObjectStore(this.properties.objectStore, {keyPath: this.properties.key});
+
+              objectStore.transaction.oncomplete = function(event) {
+                var objectStore = db.transaction(this.properties.objectStore, "readwrite").objectStore(this.properties.objectStore);
+                objectStore.add({id: 123, name: 'Jose'});
+              }.bind(this);
+
+            }.bind(this);
+
+          },
+
+          proceed: function(db) {
+            if (this.type) {
+              var transaction = db.transaction(this.properties.objectStore, "readwrite")
+              var store = transaction.objectStore(this.properties.objectStore);
+              var request = store[this.type].apply(store, this.args);
+              request.onsuccess = function(event) {
+                if (this.successCallback) {
+                  if (this.type === 'put') {
+                    this.successCallback(this.args[0]);
+                  } else {
+                    this.successCallback(event.target.result);
+                  }
+                }
+              }.bind(this);
+            } else {
+              if (this.successCallback) {
+                this.successCallback();
+              }
+            }
+
+          }
+        };
+
+      }
+
+      this.batchServiceData = [];
+
+      this.getBatchService = function(verb) {
+        return function(properties) {
+          var promise = {
+            verb: verb,
+            properties: properties,
+            successCallback: null,
+            errorCallback: null,
+            success: function (successCallback) {
+              this.successCallback = successCallback;
+              return this;
+            },
+
+            error: function (errorCallback) {
+              this.errorCallback = errorCallback;
+              return this;
+            }
+          };
+
+          $timeout(function() {
+            var ds = this.getParentDatasource();
+            let obj = properties.originalObject || properties.rawData || properties.data || this.active
+
+            let entity = this.entity;
+
+            if (verb == 'PUT') {
+              entity = this.getEditionURL(obj);
+            }
+
+            if (verb == 'DELETE') {
+              entity = this.getDeletionURL(obj);
+            }
+
+            if (entity.indexOf("/") > 0) {
+              entity = entity.substring(entity.lastIndexOf("/")+1, entity.length);
+            }
+
+            ds.batchServiceData.push({
+              entity: entity,
+              data: obj,
+              promise: promise
+            });
+
+            if (promise.successCallback) {
+              promise.successCallback.call(this, obj, null, null, null, true);
+            }
+          }.bind(this));
+
+          return promise;
+        }.bind(this);
+      }
+
+      this.batchEnabled = function(obj) {
+        if (obj && this.hasPendingChanges()) {
+          return this.getBatchDataItem(obj) != null ? false : true;
+        }
+
+        return false;
+      }
+
+      this.getBatchDataItem = function(obj) {
+        if (obj) {
+          var ds = this.getParentDatasource();
+          for (let i = 0; i < ds.batchServiceData.length; i++) {
+            let data = ds.batchServiceData[i].data;
+            if (data.__$id == obj.__$id) {
+              return ds.batchServiceData[i];
+            }
+          }
+        }
+
+        return null;
+      }
+
+      this.performBatchPost = function(originCallback) {
+        return new Promise((resolve, reject) => {
+          let boundary = "batch_" + this.uuidv4();
+          let odataPost = "";
+
+          odataPost += "--" + boundary + "\n";
+          let changeSet = "changeset_" + this.uuidv4();
+          odataPost += "Content-Type: multipart/mixed; boundary=" + changeSet + "\n";
+
+          for (let i = 0; i < this.batchServiceData.length; i++) {
+            let batchData = this.batchServiceData[i];
+
+            odataPost += "--" + changeSet + "\n";
+
+            odataPost += "Content-Type: application/http\n";
+            odataPost += "Content-Transfer-Encoding:binary\n";
+
+            odataPost += batchData.promise.properties.method + " " + batchData.entity + " HTTP/1.1\n";
+            odataPost += "Content-Type: application/json\n";
+            odataPost += "Accept: application/json\n";
+            odataPost += "X-Master-Id: "+batchData.promise.properties.originalObject.__$id+"\n";
+            if (batchData.promise.properties.originalObject.__$masterExpression) {
+              odataPost += "X-Detail-Fill: " + batchData.promise.properties.originalObject.__$masterExpression + "\n";
+            }
+
+            let headers = batchData.promise.properties.headers;
+            for (var key in headers) {
+              if (headers.hasOwnProperty(key)) {
+                odataPost += key + ": " + headers[key] + "\n";
+              }
+            }
+
+            if (batchData.promise.properties.method != 'DELETE') {
+              odataPost += batchData.promise.properties.data + "\n";
+            }
+
+          }
+
+          odataPost += "--" + changeSet + "--\n";
+          odataPost += "--" + boundary + "--\n";
+          console.log(odataPost);
+
+          let url = this.entity;
+          if (url.indexOf("/") > 0) {
+            url = url.substring(0, url.lastIndexOf("/"));
+          }
+
+          let headers = {};
+
+          this.copy(this.headers, headers);
+          headers["Content-Type"] = "multipart/mixed; boundary=" + boundary;
+
+          let error = (data, status, headers, config) => {
+            let callback;
+            if (this.batchServiceData.length > 0) {
+              callback = this.batchServiceData[0].promise.errorCallback;
+            }
+
+            if (callback) {
+              callback(data, status, headers, config, false);
+            } else {
+              this.handleError(data)
+            }
+
+            this.batchServiceData = [];
+          };
+
+          $httpLegacy({
+            method: "POST",
+            url: _self.removeSlash(((window.hostApp || "") + url + "/$batch")),
+            data: odataPost,
+            headers: headers,
+          }).success(function (data, status, headers, config, batchPostponed) {
+            let result = this.parseBatchResult(data);
+            for (let i = 0; i < result.length; i++) {
+              if (result[i].status >= 400) {
+                error(result[i].data, result[i].status);
+                return;
+              }
+            }
+            for (let i = 0; i < this.batchServiceData.length; i++) {
+              this.batchServiceData[i].result = result[i].data == null ? this.batchServiceData[i].data : result[i].data;
+            }
+
+            if (originCallback) {
+              originCallback();
+            } else {
+              let callback;
+              if (this.batchServiceData.length > 0) {
+                callback = this.batchServiceData[0].promise.successCallback;
+              }
+
+              if (callback) {
+                this.batchServiceData.splice(0, 1);
+                callback(result[0].data, result[0].status, headers, config, false);
+              }
+            }
+
+          }.bind(this)).error(error);
+        });
+      }
+
+      this.parseBatchResult = function(data) {
+        let results = [];
+        let lines = data.split("\n");
+        let status;
+        for (let j=0;j<lines.length;j++) {
+          let line = lines[j];
+          if (line.startsWith("{")) {
+            results.push({
+              status: status,
+              data: JSON.parse(line)
+            });
+          }
+
+          if (line.startsWith("HTTP/1.1")) {
+            var g = HTTP_STATUS.exec(line);
+            status = g[1];
+          }
+
+          if (line.startsWith("HTTP/1.1") && line.indexOf("No Content") > 0) {
+            results.push({
+              status: status,
+              data: null
+            });
+          }
+        }
+
+        return results;
+      }
+
+      this.uuidv4 = function() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+      }
+
+      this.getService = function(verb, object) {
+        _self = this;
+        var event = eval("this.on"+verb);
+
+        if (event || this.isLocalData()) {
+          return function(properties) {
+            var promise = {
+              verb: verb,
+              properties: properties,
+              successCallback: null,
+              errorCallback: null,
+              success: function(successCallback) {
+                this.successCallback = successCallback;
+                return this;
+              },
+
+              error: function(errorCallback) {
+                this.errorCallback = errorCallback;
+                return this;
+              }
+            };
+
+            $timeout(function() {
+              var contextVars = {
+                'currentData': this.properties.rawData||this.properties.data||_self.active,
+                'filter': this.properties.filter||"",
+                'datasource': _self,
+                'selectedIndex': _self.cursor,
+                'index': _self.cursor,
+                'selectedRow': _self.active,
+                'item': _self.active,
+                'selectedKeys': _self.getKeyValues(_self.active, true),
+                'selectedKey': _self.getFirstKeyValue(_self.active, true),
+                'callback': this.successCallback
+              };
+
+              var result;
+
+              if (event) {
+                result = _self.$scope.$eval(event, contextVars);
+
+                if (result instanceof Promise) {
+                  result.then(function(result) {
+                    if (result && Object.prototype.toString.call(result) !== '[object Array]') {
+                      result = [result];
+                    }
+                    _self.$scope.safeApply(function() {
+                      this.successCallback(result)
+                    }.bind(this));
+                  }.bind(this)).catch(function(reason){_self.handleError(reason)}.bind(this))
+                } else if(result){
+                  this.successCallback(result);
+                }
+
+              } else {
+                var args = [];
+
+                var db = new PouchDB(_self.localDBName);
+
+                if (this.verb == 'GET' && !this.properties.filter) {
+                  db.allDocs({
+                    include_docs: true,
+                    attachments: true
+                  }).catch(this.errorCallback).then(function(result) {
+                    var data = [];
+                    for (var i=0;i<result.rows.length;i++) {
+                      data.push(result.rows[i].doc);
+                    }
+                    result.rows = data;
+                    if (this.successCallback) {
+                      this.successCallback(result);
+                    }
+                  }.bind(this));
+                }
+
+                else if (this.verb == 'GET') {
+                  var filter = peg$parse(this.properties.filter);
+                  db.find({selector: filter}).catch(this.errorCallback).then(function(result) {
+                    result.rows = result.docs;
+                    result.total_rows = result.rows.length;
+                    if (this.successCallback) {
+                      this.successCallback(result);
+                    }
+                  }.bind(this));
+                }
+
+                else if (this.verb == 'DELETE') {
+                  db.remove(contextVars.currentData).catch(this.errorCallback).then(this.successCallback);
+                }
+
+                else if (this.verb == 'POST') {
+                  db.post(contextVars.currentData).catch(this.errorCallback).then(function(result) {
+                    contextVars.currentData._id = result.id;
+                    contextVars.currentData._rev = result.rev;
+                    if (this.successCallback) {
+                      this.successCallback(contextVars.currentData);
+                    }
+                  }.bind(this));
+                }
+
+                else if (this.verb == 'PUT') {
+                  db.put(contextVars.currentData).catch(this.errorCallback).then(function(result) {
+                    contextVars.currentData._rev = result.rev;
+                    if (this.successCallback) {
+                      this.successCallback(contextVars.currentData);
+                    }
+                  }.bind(this));
+                }
+              }
+
+            }.bind(promise),0);
+
+            return promise;
+          }
+
+        }
+
+        if (this.batchEnabled(object) && verb != 'GET') {
+          return this.getBatchService(verb);
+        }
+        return $httpLegacy;
+      }
+
+      /**
+       * Check if the datasource is waiting for any request response
+       */
+      this.isBusy = function() {
+        return this.busy;
+      }
+
+      /**
+       * Check if the datasource was loaded by service
+       */
+      this.isLoaded = function() {
+        return this.loaded;
+      }
+
+      this.toString = function() {
+        return "[Datasource]"
+      }
+
+      this.handleAfterCallBack = function(callBackFunction, callback) {
+        if (callBackFunction) {
+          try {
+
+            var contextVars = {
+              'currentData': this.data,
+              'datasource': this,
+              'selectedIndex': this.cursor,
+              'index': this.cursor,
+              'selectedRow': this.active,
+              'item': this.active,
+              'selectedKeys': this.getKeyValues(this.active, true),
+              'selectedKey': this.getFirstKeyValue(_self.active, true),
+              'callback': callback
+            };
+
+            this.$scope.$eval(callBackFunction, contextVars);
+          } catch (e) {
+            this.handleError(e);
+          }
+        }
+      }
+
+      this.onMatchRegex = (regex, run, complete) => {
+        return (callbackFunction) => {
+          let result = regex.exec(callbackFunction);
+          if (result && result.length) return callbackFunction.split(run).join(complete + run);
+          return callbackFunction;
+        }
+      };
+
+      this.handleBeforeCallBack = async function(callBackFunction, callback) {
+        var isValid = true;
+        let toPromise = this.onMatchRegex(/cronapi.server/g, '.run(', '.toPromise().disableNotification()');
+        if (callBackFunction) {
+          try {
+            var contextVars = {
+              'currentData': this.data,
+              'datasource': this,
+              'selectedIndex': this.cursor,
+              'index': this.cursor,
+              'selectedRow': this.active,
+              'item': this.active,
+              'selectedKeys': this.getKeyValues(this.active, true),
+              'selectedKey': this.getFirstKeyValue(_self.active, true),
+              'callback': callback
+            };
+
+            await this.$scope.$eval(toPromise(callBackFunction), contextVars);
+          } catch (e) {
+            isValid = false;
+            this.handleError(e);
+          }
+        }
+        return isValid;
+      }
+
+      /**
+       * Error Handler function
+       */
+      this.handleError = function(data) {
+        console.log(data);
+
+        if (data instanceof XMLDocument) {
+          var errorMsg = data.getElementsByTagName("message")[0].textContent;
+          data = errorMsg;
+          console.log(data);
+        }
+
+        var error = "";
+
+        if (data) {
+          if (Object.prototype.toString.call(data) === "[object String]") {
+            error = data;
+          } else {
+            var errorMsg = (data.msg || data.desc || data.message || data.error || data.responseText);
+            if (this.isOData() && data.error.message && data.error.message.value) {
+              errorMsg = data.error.message.value;
+            }
+            if (errorMsg) {
+              error = errorMsg;
+            }
+          }
+        }
+
+        if (!error) {
+          error = this.defaultNotSpecifiedErrorMessage;
+        }
+
+        var regex = /<h1>(.*)<\/h1>/gmi;
+        result = regex.exec(error);
+
+        if (result && result.length >= 2) {
+          error = result[1];
+        }
+
+        this.errorMessage = error;
+
+        if (this.onError && this.onError !== '') {
+          if (typeof(this.onError) === 'string') {
+            try {
+              var contextVars = {
+                'currentData': this.active,
+                'filter': "",
+                'datasource': this,
+                'selectedIndex': this.cursor,
+                'index': this.cursor,
+                'selectedRow': this.active,
+                'item': this.active,
+                'selectedKeys': this.getKeyValues(this.active, true),
+                'selectedKey': this.getFirstKeyValue(this.active, true),
+                'callback': this.successCallback
+              };
+              var func = this.$scope.$eval(this.onError, contextVars);
+              if (typeof(func) === 'function') {
+                this.onError = func;
+              }
+            } catch (e) {
+              isValid = false;
+              Notification.error(e);
+            }
+          }
+        } else {
+          this.onError = function(error) {
+            Notification.error(error);
+          };
+        }
+
+        this.onError.call(this, error);
+      }
+
+      // Start watching for changes in activeRow to notify observers
+      if (this.observers && this.observers.length > 0) {
+        $rootScope.$watch(function() {
+          return this.active;
+        }.bind(this), function(activeRow) {
+          if (activeRow) {
+            this.notifyObservers(activeRow);
+          }
+        }.bind(this), true);
+      }
+    }
+
+    //Public methods
+
+    this.setFile = function($file, object, field) {
+      if ($file && $file.$error === 'pattern') {
+        return;
+      }
+      if ($file) {
+        toBase64($file, function(base64Data) {
+          this.$apply = function(value) {
+            object[field] = value;
+            scope.$apply(object);
+          }.bind(scope);
+          this.$apply(base64Data);
+        });
+      }
+    };
+
+    this.downloadFile = function(field, keys) {
+      if (keys === undefined)
+        return;
+      var url = (window.hostApp || "") + this.entity + "/download/" + field;
+      for (var index = 0; index < keys.length; index++) {
+        url += "/" + keys[index];
+      }
+      var req = {
+        url: url,
+        method: 'GET',
+        responseType: 'arraybuffer'
+      };
+      $http(req).then(function(result) {
+        var blob = new Blob([result.data], {
+          type: 'application/*'
+        });
+        $window.open(URL.createObjectURL(blob));
+      });
+    };
+
+    function toBase64(file, cb) {
+      var fileReader = new FileReader();
+      fileReader.readAsDataURL(file);
+      fileReader.onload = function(e) {
+        var base64Data = e.target.result.substr(e.target.result.indexOf('base64,') + 'base64,'.length);
+        cb(base64Data);
+      };
+    }
+
+    this.openImage = function(data) {
+      if (data.indexOf('https://') == -1 && data.indexOf('http://') == -1)  {
+        var  value = 'data:image/png;base64,' + data;
+        var w = $window.open("", '_blank', 'height=300,width=400');
+        w.document.write('<img src="'+ value + '"/>');
+      } else {
+        $window.open(data, '_blank', 'height=300,width=400');
+      }
+    };
+
+    this.byteSize = function(base64String) {
+      if (!angular.isString(base64String)) {
+        return '';
+      }
+
+      function endsWith(suffix, str) {
+        return str.indexOf(suffix, str.length - suffix.length) !== -1;
+      }
+
+      function paddingSize(base64String) {
+        if (endsWith('==', base64String)) {
+          return 2;
+        }
+        if (endsWith('=', base64String)) {
+          return 1;
+        }
+        return 0;
+      }
+
+      function size(base64String) {
+        return base64String.length / 4 * 3 - paddingSize(base64String);
+      }
+
+      function formatAsBytes(size) {
+        return size.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' bytes';
+      }
+
+      return formatAsBytes(size(base64String));
+    };
+
+    function uuid() {
+      var uuid = "", i, random;
+      for (i = 0; i < 32; i++) {
+        random = Math.random() * 16 | 0;
+
+        if (i == 8 || i == 12 || i == 16 || i == 20) {
+          uuid += "-"
+        }
+        uuid += (i == 12 ? 4 : (i == 16 ? (random & 3 | 8) : random)).toString(16);
+      }
+      return uuid;
+    }
+
+    /**
+     * Append a new value to the end of this dataset.
+     */
+    this.insert = async function(obj, onSuccess, onError, forceSave) {
+      if (await this.handleBeforeCallBack(this.onBeforeCreate)) {
+        //Check if contains dependentBy, if contains, only store in data TRM
+        if ((this.dependentLazyPost || this.batchPost) && !forceSave) {
+          obj.__status = 'inserted';
+          if (this.dependentLazyPost) {
+            obj.__parentId = eval(this.dependentLazyPost).active.__$id;
+          }
+          this.hasMemoryData = true;
+          this.notifyPendingChanges(this.hasMemoryData);
+
+          if (onSuccess)
+            onSuccess(obj);
+
+        } else {
+          service.save(obj).$promise.error(onError).then(onSuccess);
+        }
+      }
+    };
+
+    //Public methods
+
+    /**
+     * Append a datasource to be notify when has a post or cancel
+     */
+    this.addDependentDatasource = function(dts) {
+      if (!this.children)
+        this.children = [];
+
+      this.children.push(dts);
+
+      if (this.dependentLazyPost) {
+        eval(this.dependentLazyPost).addDependentDatasource(dts);
+      } else {
+        if (!this.dependentData)
+          this.dependentData = [];
+        this.dependentData.push(dts);
+      }
+    }
+
+    this.getParentDatasource = function() {
+      if (this.dependentLazyPost) {
+        return eval(this.dependentLazyPost).getParentDatasource();
+      }
+
+      return this
+    }
+
+    this.updateObjectAtIndex = function(obj, data, idx) {
+      data = data || this.data;
+
+      this.copy(obj, data[idx]);
+      obj.__$id = data[idx].__$id;
+      delete data[idx].__status;
+      delete data[idx].__original;
+      delete data[idx].__originalIdx;
+      delete data[idx].__odatafiles;
+      delete data[idx].__$masterExpression;
+    }
+
+    this.cleanDependentBuffer = function() {
+      var newData = [];
+      $(this.data).each(function() {
+        if (this.__status) {
+          if (this.__status == "updated") {
+            newData.push(this.__original);
+          }
+        } else {
+          newData.push(this);
+        }
+      });
+
+      this.data.length = 0;
+
+      for (var i=0;i<newData.length;i++) {
+        delete newData[i].__status;
+        delete newData[i].__original;
+        delete newData[i].__originalIdx;
+        this.data.push(newData[i]);
+      }
+
+      if (this.postDeleteData) {
+        for (var i=0;i<this.postDeleteData.length;i++) {
+          delete this.postDeleteData[i].__status;
+          delete this.postDeleteData[i].__original;
+          delete this.postDeleteData[i].__originalIdx;
+          this.data.push(this.postDeleteData[i]);
+        }
+      }
+
+      if (this.data && this.data.length > 0) {
+        this.cursor = 0;
+        this.active = this.data[0];
+      } else {
+        this.cursor = -1;
+        this.active = null;
+      }
+
+      this.busy = false;
+      this.editing = false;
+      this.inserting = false;
+      this.postDeleteData = null;
+      this.hasMemoryData = false;
+      this.notifyPendingChanges(this.hasMemoryData);
+
+      if (this.events.read) {
+        this.callDataSourceEvents('read', this.data);
+      }
+
+      if (this.events.afterchanges) {
+        this.callDataSourceEvents('afterchanges', this.data);
+      }
+    }
+
+    this.cancelBatchData = function(callback) {
+      if (this.dependentData) {
+        $(reverseArr(this.dependentData)).each(function() {
+          this.cleanDependentBuffer();
+        });
+      }
+
+      this.cleanDependentBuffer();
+      this.batchServiceData = [];
+      if (callback) {
+        callback();
+      }
+    }
+
+    this.flushDependencies = function(callback, batchPostponed) {
+      var reset = [];
+      if (this.dependentData) {
+
+        var ins = function() {
+
+          reduce(this.dependentData, function (item, resolve) {
+            reset.push(item.storeDependentBuffer(function () {
+              resolve();
+            }, undefined, batchPostponed))
+          }.bind(this), function () {
+            if (callback) {
+              callback(reset);
+            }
+          }.bind(this))
+
+        }.bind(this);
+
+        reduce(reverseArr(this.dependentData), function (item, resolve) {
+          item.storeDependentBuffer(function () {
+            resolve();
+          }, true, batchPostponed);
+        }.bind(this), function () {
+          ins();
+        }.bind(this))
+
+
+      } else {
+        if (callback) {
+          callback(reset);
+        }
+      }
+    }
+
+    this.postBatchData = function(callbackClient, dontPostpone) {
+      let batchPostponed = dontPostpone?false:true;
+      if (!dontPostpone) {
+        this.batchServiceData = [];
+      }
+      let callback = ()=> {
+        if (batchPostponed) {
+          batchPostponed = false;
+          this.performBatchPost(function() {
+            this.postBatchData(callbackClient, true);
+          }.bind(this));
+        } else {
+          if (callbackClient) {
+            callbackClient();
+          }
+        }
+      };
+      this.postingBatch = true;
+      var cleanFuncs = [];
+      var func = function() {
+        this.storeDependentBuffer(function () {
+          cleanFuncs.push(this.storeDependentBuffer(function () {
+            reduce(this.dependentData, function (item, resolve) {
+              cleanFuncs.push(item.storeDependentBuffer(function () {
+                resolve();
+              }, false, batchPostponed));
+            }.bind(this), function () {
+              this.postingBatch = false;
+              for (var x=0;x<cleanFuncs.length;x++) {
+                cleanFuncs[x]();
+              }
+              if (callback) {
+                callback();
+              }
+            }.bind(this))
+
+          }.bind(this), false, batchPostponed));
+        }.bind(this), true, batchPostponed);
+      }.bind(this);
+
+      //Primeiro executa as remoções dos filhos
+      reduce(reverseArr(this.dependentData), function (item, resolve) {
+        item.storeDependentBuffer(function () {
+          resolve();
+        }, true, batchPostponed);
+      }.bind(this), function() {
+        func();
+      }.bind(this));
+    }
+
+    var reduce = function (array, func, callback) {
+      if (!array || array.length == 0) {
+        callback();
+      } else {
+        var requests = array.reduce(function (promiseChain, item) {
+
+          return promiseChain.then(function () {
+            return new Promise(function (resolve) {
+              func(item, resolve);
+            })
+          });
+        }, Promise.resolve());
+
+        requests.then(function () {
+          callback();
+        });
+      }
+    }
+
+    this.storeDependentBuffer = function(callback, onlyRemove, batchMode) {
+      var _self = this;
+      var dependentDS = eval(_self.dependentLazyPost);
+
+      if (this.batchPost) {
+        dependentDS = this;
+      }
+
+      var array = [];
+
+      if (!onlyRemove) {
+        array = array.concat(_self.data);
+
+        if (_self.memoryData) {
+          for (key in _self.memoryData) {
+            if (_self.memoryData.hasOwnProperty(key)) {
+              var mem = _self.memoryData[key];
+              for (var x = 0; x < mem.data.length; x++) {
+                mem.data[x].__fromMemory = true;
+              }
+              array = array.concat(mem.data);
+            }
+          }
+        }
+      }
+
+      if (_self.postDeleteData) {
+        array = array.concat(_self.postDeleteData);
+      }
+
+
+      var func = function (item, resolve) {
+
+        if (item.__status) {
+
+          if (!_self.parameters) {
+            if (_self.dependentLazyPostField) {
+              item[_self.dependentLazyPostField] = dependentDS.active;
+            }
+
+            if (_self.entity.indexOf('//') > -1) {
+              var keyObj = dependentDS.getKeyValues(dependentDS.active);
+              var suffixPath = '';
+              for (var key in keyObj) {
+                if (keyObj.hasOwnProperty(key)) {
+                  suffixPath += '/' + keyObj[key];
+                }
+              }
+              suffixPath += '/';
+              _self.entity = _self.entity.replace('//', suffixPath);
+            }
+          }
+
+          if (_self.parameters) {
+            var params = _self.getParametersMap(item.__parentId ? item.__parentId : null);
+            for (var key in params) {
+              if (params.hasOwnProperty(key)) {
+                updateObjectValue(item, key, params[key]);
+              }
+            }
+
+            let masterExpression = _self.getParametersBatchExpression(item.__parentId ? item.__parentId : null);
+            item.__$masterExpression = masterExpression;
+          }
+
+          if (item.__status == "inserted") {
+            (function (oldObj) {
+              var odataFiles;
+              if (!batchMode) {
+                odataFiles = _self.processODataFiles(oldObj);
+              }
+              _self.insert(oldObj, function (newObj, hotData, batchPostponed) {
+                if (batchPostponed) {
+                  resolve();
+                  return;
+                }
+                var sender = oldObj.__sender;
+                var idx = _self.getIndexOfListTempBuffer(oldObj, array);
+                var isFromMemory = false;
+                var currentObj = newObj;
+                if (idx >= 0) {
+                  currentObj = array[idx];
+                  isFromMemory = array[idx].__fromMemory;
+                  _self.updateObjectAtIndex(newObj, array, idx);
+                }
+                if (_self.events.create && !isFromMemory) {
+                  if (sender) {
+                    newObj = array[idx];
+                    newObj.__sender = sender;
+                  }
+                  _self.callDataSourceEvents('create', newObj);
+                  delete newObj.__sender;
+                }
+
+                if (odataFiles && odataFiles.length > 0) {
+                  _self.sendODataFiles(odataFiles, newObj, function (result) {
+                    _self.copy(result.data, currentObj);
+                  }.bind(this), function() {
+                    resolve();
+                  });
+                } else {
+                  resolve();
+                }
+              }, function () {
+                resolve();
+              }, true);
+            })(item);
+          }
+
+          else if (item.__status == "updated") {
+            (function (oldObj) {
+              var odataFiles;
+              if (!batchMode) {
+                odataFiles = _self.processODataFiles(oldObj);
+              }
+              _self.update(oldObj, function (newObj, hotData, batchPostponed) {
+                if (batchPostponed) {
+                  resolve();
+                  return;
+                }
+                var sender = oldObj.__sender;
+                var idx = _self.getIndexOfListTempBuffer(oldObj, array);
+                var isFromMemory = false;
+                var currentObj = newObj;
+                if (idx >= 0) {
+                  currentObj = array[idx];
+                  isFromMemory = array[idx].__fromMemory;
+                  _self.updateObjectAtIndex(newObj, array, idx);
+                  newObj = array[idx];
+                }
+                if (_self.events.update && !isFromMemory) {
+                  if (sender) {
+                    newObj.__sender = sender;
+                  }
+                  _self.callDataSourceEvents('update', newObj);
+                  delete newObj.__sender;
+                }
+                if (odataFiles && odataFiles.length > 0) {
+                  _self.sendODataFiles(odataFiles, newObj, function (result) {
+                    _self.copy(result.data, currentObj);
+                  }.bind(this), function() {
+                    resolve();
+                  });
+                } else {
+                  resolve();
+                }
+              }, function () {
+                resolve();
+              }, true);
+            })(item);
+          }
+
+          else if (item.__status == "deleted" && onlyRemove) {
+            (function (oldObj) {
+              _self.remove(oldObj, function (newObj, hotData, batchPostponed) {
+                if (batchPostponed) {
+                  resolve();
+                  return;
+                }
+                if (_self.events.delete) {
+                  var param = {};
+                  _self.copy(oldObj, param);
+                  delete param.__status;
+                  delete param.__original;
+                  delete param.__originalIdx;
+                  _self.callDataSourceEvents('delete', param);
+                }
+                resolve();
+              }, true, null, function() {
+                resolve();
+              });
+            })(item);
+          }
+
+          else {
+            resolve();
+          }
+        } else {
+          resolve();
+        }
+      };
+
+      var resetFunc = function() {
+        if (!onlyRemove) {
+          this.busy = false;
+          this.editing = false;
+          this.inserting = false;
+          this.hasMemoryData = false;
+          this.memoryData = null;
+          if (!batchMode) {
+            this.notifyPendingChanges(this.hasMemoryData);
+          }
+          if (this.events.afterchanges && !batchMode) {
+            this.callDataSourceEvents('afterchanges', this.data);
+          }
+        }
+      }.bind(this);
+
+      reduce(array, func, function () {
+        if (callback) {
+          callback();
+        }
+        if (!batchMode) {
+          this.postDeleteData = null;
+        }
+      }.bind(this));
+
+      return resetFunc;
+    }
+
+    /**
+     * Find object in list by tempBufferId
+     */
+    this.getIndexOfListTempBuffer = function(obj, data) {
+      data = data || this.data;
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].__$id && obj.__$id && data[i].__$id == obj.__$id) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
+    this.getObjectAsString = function(o) {
+      if (this.isOData()) {
+        return window.objToOData(o);
+      } else {
+        if (o == null) {
+          return "";
+        }
+        else if (typeof o == 'number') {
+          return o+"@@number";
+        }
+        else if (o instanceof Date) {
+          return o.toISOString()+"@@datetime";
+        }
+
+        else if (typeof o == 'boolean') {
+          return o+"@@boolean";
+        }
+
+        return o+"";
+      }
+    }
+
+    /**
+     * Uptade a value into this dataset by using the dataset key to compare the objects.
+     */
+    this.update = async function(obj, onSuccess, onError, forceUpdate) {
+
+      if (await this.handleBeforeCallBack(this.onBeforeUpdate)) {
+        if ((this.dependentLazyPost || this.batchPost) && !forceUpdate) {
+          if (onSuccess)
+            onSuccess(obj);
+        } else {
+          service.update(this.getEditionURL(obj, forceUpdate), obj).$promise.error(onError).then(onSuccess);
+        }
+      }
+    };
+
+    this.validateFields = function(expression, message) {
+      var selection = $(expression);
+      if (selection.length > 0 && selection.get(0).type !== 'checkbox') {
+        var forId = $('label[for="'+selection.get(0).id+'"]');
+        var label = selection.get(0).id
+        if (forId.length > 0) {
+          label = forId.text();
+        }
+
+        if (message) {
+          Notification.error(message.replace("{0}", label));
+          $(selection.get(0)).addClass("ng-touched").removeClass("ng-untouched");
+          if (selection.get(0).focus) {
+            selection.get(0).focus();
+          }
+        }
+        return false;
+      }
+      return true;
+    };
+
+    /**
+     * Always valid if input has pattern
+     */
+
+    this.getPatterns = function(){
+      return $('input[ng-model*="' + this.name + '."]').filter(function( index ) {
+        return $( this ).attr("pattern");
+      });
+    };
+
+    /**
+     * Valid if required field is valid
+     */
+    this.missingRequiredField = function(silent) {
+      if(this.getPatterns().length > 0){
+        return false;
+      }
+      if (this.checkRequired) {
+        var valid = this.validateFields('[required][ng-model*="' + this.name + '."].ng-invalid-required', !silent ? this.translate.instant("FieldIsRequired") : "");
+        valid = valid && this.validateFields('[required][ng-model*="' + this.name + '."].ng-empty', !silent ? this.translate.instant("FieldIsRequired") : "");
+        valid = valid && this.validateFields('[ng-model*="' + this.name + '."].ng-invalid', !silent ? this.translate.instant("FieldIsInvalid") : "");
+
+        return !valid;
+      } else {
+        return false;
+      }
+    };
+
+    /**
+     * Valid is other validations like email, date and so on
+     */
+    this.hasInvalidField = function() {
+      if(this.getPatterns().length > 0){
+        return false;
+      }
+      if (this.checkRequired) {
+        return $('input[ng-model*="' + this.name + '."]:invalid').not('.ng-empty').length > 0;
+      } else {
+        return false;
+      }
+    };
+
+    this.postSilent = function(onSuccess, onError) {
+      this.post(onSuccess, onError, true);
+    }
+
+    this.updateActive = function(from) {
+      for (var key in from) {
+        if (from.hasOwnProperty(key) && key != "__status") {
+          this.active[key] = from[key];
+        }
+      }
+    }
+
+    this.processODataFiles = function(array) {
+      var odataFile = [];
+
+      for (var key in array) {
+        if (key.indexOf('__odataFile_') > -1) {
+
+          var odataFileObj = {
+            field: key.replace('__odataFile_',''),
+            value: array[key]
+          }
+          odataFile.push(odataFileObj);
+          array[odataFileObj.field] = undefined;
+          delete array[key];
+        }
+      }
+
+      return odataFile;
+    };
+
+    this.sendODataFiles = function(odataFile, obj, callback, afterUpdate) {
+      if (obj && odataFile && odataFile.length > 0) {
+
+        var url = this.entity;
+        var keysValues = this.getKeyValues(obj);
+        var keysFilter = ['('];
+        var idx = 0;
+        for (var k in keysValues) {
+          if (idx > 0)
+            keysFilter.push(',')
+          keysFilter.push(k);
+          keysFilter.push('=');
+          keysFilter.push(window.objToOData(keysValues[k]));
+          idx++;
+        }
+        keysFilter.push(')');
+        url += keysFilter.join('');
+
+        var _u = JSON.parse(localStorage.getItem('_u'));
+
+        reduce(odataFile, function (of, resolve) {
+
+          var file = of.value;
+          var xhr = new XMLHttpRequest;
+          xhr.open('PUT', (window.hostApp || "") + url + '/' +  of.field + '/$value');
+          xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+          xhr.setRequestHeader('X-File-Name', file.name);
+          xhr.setRequestHeader('Content-Type', (file.type||'application/octet-stream') + ';charset=UTF-8' );
+          xhr.setRequestHeader('X-AUTH-TOKEN', _u.token);
+
+          xhr.onreadystatechange = function(){
+            if(xhr.readyState === 4 && xhr.status === 500){
+              var parser = new DOMParser();
+              var error = parser.parseFromString(xhr.response,"text/xml");
+              this.handleError(error);
+            }
+            if(xhr.readyState === 4 && xhr.status === 201){
+              //Having to make another request to get the base64 value
+              service.call(url, 'GET', {}, false).$promise.error(function(errorMsg) {
+                Notification.error('Error send file');
+              }).then(function(data, resultBool) {
+                if (callback) {
+                  callback({ field: of.field, data: data });
+                } else {
+                  obj[of.field] = data[of.field];
+                }
+
+                resolve();
+              });
+            }
+          }.bind(this);
+
+          xhr.send(file);
+
+        }.bind(this), function() {
+          if (afterUpdate) {
+            afterUpdate();
+          }
+        }.bind(this));
+      } else {
+        if (afterUpdate) {
+          afterUpdate();
+        }
+      }
+    };
+
+    this.getFieldSchema = function(fieldName) {
+      var s;
+      if (this.schema) {
+        for (var i = 0; i < this.schema.length; i++) {
+          if (this.schema[i].name == fieldName) {
+            s = this.schema[i];
+            break;
+          }
+        }
+      }
+      return s;
+    };
+
+    this.asyncPost = function(onSuccess, onError, silent) {
+      setTimeout(function() {
+        this.post(onSuccess, onError, silent);
+      }.bind(this), 100);
+    }
+
+    this.copyWithoutAngularObj = function() {
+      var newObj = {};
+      for (var key in this) {
+        if (this.hasOwnProperty(key) && !key.startsWith('$')) {
+          newObj[key] = this[key];
+        }
+      }
+      return newObj;
+    };
+
+    /**
+     * Insert or update based on the the datasource state
+     */
+    this.post = function(onSuccess, onError, silent, keepBuffer) {
+
+      if (!silent && this.missingRequiredField())
+        return;
+
+      if (!silent && this.hasInvalidField())
+        return;
+
+      if (!keepBuffer) {
+        this.batchServiceData = [];
+      }
+
+      this.lastAction = "post"; //TRM
+
+      this.busy = true;
+
+      if (this.inserting) {
+        // Make a new request to persist the new item
+        this.insert(this.active, function(obj, hotData, batchPostponed) {
+          if (batchPostponed) {
+            if (this.dependentData && !this.dependentLazyPost && !this.batchPost) {
+              this.flushDependencies(() => {
+                this.performBatchPost(() => {
+                  this.post(onSuccess, onError, silent, true);
+                });
+              }, true);
+
+              return;
+            }
+          }
+          // In case of success add the new inserted value at
+          // the end of the array
+
+          if (this.active.__sender) {
+            obj.__sender = this.active.__sender;
+          }
+
+          if (this.active.__$id) {
+            obj.__$id = this.active.__$id;
+          }
+
+          var func = function(resetFunctions) {
+            // The new object is now the active
+            this.active = obj;
+
+            this.handleAfterCallBack(this.onAfterCreate);
+            this.onBackNomalState();
+
+            if (onSuccess) {
+              onSuccess(this.active);
+            }
+
+            if (this.events.create && hotData) {
+              this.callDataSourceEvents('create', this.active);
+              delete _self.active.__sender;
+            }
+
+            if (this.events.memorycreate && !hotData) {
+              this.callDataSourceEvents('memorycreate', this.active);
+            }
+
+            if (resetFunctions) {
+              for (let i =0;i<resetFunctions.length;i++) {
+                resetFunctions[i]();
+              }
+            }
+          }.bind(this);
+
+          var proceed = function () {
+            this.data.push(obj);
+
+            if (this.dependentData && !this.dependentLazyPost && !this.batchPost) {
+              this.flushDependencies(func, false);
+            } else {
+              func();
+            }
+          }.bind(this);
+
+          if (!hotData) {
+            proceed();
+          } else {
+            var odataFiles = this.processODataFiles(this.active);
+
+            if (odataFiles && odataFiles.length > 0) {
+              this.sendODataFiles(odataFiles, obj, function (result) {
+                this.copy(result.data, obj);
+              }.bind(this), function() {
+                proceed()
+              }.bind(this));
+            } else {
+              proceed();
+            }
+          }
+        }.bind(this), onError);
+
+      } else if (this.editing) {
+        // Make a new request to update the modified item
+        this.update(this.active, function(obj, hotData, batchPostponed) {
+          if (batchPostponed) {
+            if (this.dependentData && !this.dependentLazyPost && !this.batchPost) {
+              this.flushDependencies(() => {
+                this.performBatchPost(() => {
+                  this.post(onSuccess, onError, silent, true);
+                });
+              }, batchPostponed);
+
+              return;
+            }
+          }
+          var odataFiles;
+
+          if (hotData) {
+            odataFiles = this.processODataFiles(this.active);
+          }
+
+          var foundRow;
+          // Get the list of keys
+          var keyObj = this.getKeyValues(this.lastActive);
+
+          // For each row data
+          this.data.forEach(function(currentRow) {
+            // Iterate all keys checking if the
+            // current object match with the
+            // extracted key values
+            var found;
+
+            if (this.lastActive.__$id && currentRow.__$id) {
+              found = this.lastActive.__$id == currentRow.__$id;
+            } else {
+              var dataKeys = this.getKeyValues(currentRow);
+              for (var key in keyObj) {
+                if (dataKeys[key] && dataKeys[key] === keyObj[key]) {
+                  found = true;
+                } else {
+                  found = false;
+                  break;
+                }
+              }
+            }
+
+            if (found) {
+              foundRow = currentRow;
+              var lastActive = {};
+              this.copy(this.lastActive, lastActive);
+              this.copy(obj, currentRow);
+
+              if (this.lastActive && this.lastActive.__sender) {
+                currentRow .__sender = this.lastActive.__sender;
+              }
+
+              this.active = currentRow;
+              if ((this.dependentLazyPost || this.batchPost) && !currentRow.__status) {
+                currentRow.__status = "updated";
+                currentRow.__original = lastActive;
+                this.hasMemoryData = true;
+                if (this.dependentLazyPost) {
+                  currentRow.__parentId = eval(this.dependentLazyPost).active.__$id;
+                }
+              }
+              this.notifyPendingChanges(this.hasMemoryData);
+
+              if (this.events.update && hotData) {
+                this.callDataSourceEvents('update', this.active);
+                delete this.active.__sender;
+              }
+
+              if (this.events.memoryupdate && !hotData) {
+                this.callDataSourceEvents('memoryupdate', this.active);
+              }
+            }
+          }.bind(this));
+
+          var back = function(resetFunctions) {
+
+            if (foundRow) {
+              this.handleAfterCallBack(this.onAfterUpdate);
+            }
+
+            this.onBackNomalState();
+
+            if (onSuccess) {
+              onSuccess(this.active);
+            }
+
+            if (resetFunctions) {
+              for (let i =0;i<resetFunctions.length;i++) {
+                resetFunctions[i]();
+              }
+            }
+          }.bind(this);
+
+          var func = function(resetFunctions) {
+            if (!hotData) {
+              back(resetFunctions);
+            } else {
+              if (odataFiles && odataFiles.length > 0) {
+                this.sendODataFiles(odataFiles, foundRow, function (result) {
+                  this.copy(result.data, foundRow);
+                }.bind(this), function() {
+                  if (this.events.update && hotData) {
+                    this.callDataSourceEvents('update', foundRow);
+                  }
+                  back(resetFunctions);
+                }.bind(this));
+              } else {
+                back(resetFunctions);
+              }
+            }
+          }.bind(this);
+
+          if (this.dependentData && !this.dependentLazyPost && !this.batchPost) {
+            this.flushDependencies(func);
+          } else {
+            func();
+          }
+        }.bind(this), onError);
+      } else {
+        if (this.data.length == 0) {
+          this.startInserting(this.active, function() {
+            this.post(onSuccess, onError, silent);
+          }.bind(this));
+        } else {
+          this.startEditing(null, function() {
+            this.post(onSuccess, onError, silent);
+          }.bind(this));
+        }
+      }
+    };
+
+    this.notifyPendingChanges = function(value) {
+      console.log("notifyPendingChanges : " + value);
+      if (this.events.pendingchanges) {
+        this.callDataSourceEvents('pendingchanges', value);
+      }
+
+      if (this.dependentLazyPost) {
+        eval(this.dependentLazyPost).notifyPendingChanges(value);
+      }
+    }
+
+    this.getDeletionURL = function(obj, forceOriginalKeys) {
+      var keyObj = this.getKeyValues(obj.__original?obj.__original:obj, forceOriginalKeys);
+
+      var suffixPath = "";
+      if (this.isOData()) {
+        suffixPath = "(";
+      }
+      var count = 0;
+      for (var key in keyObj) {
+        if (keyObj.hasOwnProperty(key)) {
+          if (this.isOData()) {
+            if (count > 0) {
+              suffixPath += ",";
+            }
+            suffixPath += key + "=" + this.getObjectAsString(keyObj[key]);
+          } else {
+            suffixPath += "/" + keyObj[key];
+          }
+          count++;
+        }
+      }
+      if (this.isOData()) {
+        suffixPath += ")";
+      }
+
+      var url = this.entity;
+
+      if (this.entity.endsWith('/')) {
+        url = url.substring(0, url.length-1);
+      }
+
+      return url + suffixPath;
+    };
+
+    this.notifyPendingChanges = function(value) {
+      console.log("notifyPendingChanges : " + value);
+      if (this.events.pendingchanges) {
+        this.callDataSourceEvents('pendingchanges', value);
+      }
+
+      if (this.dependentLazyPost) {
+        eval(this.dependentLazyPost).notifyPendingChanges(value);
+      }
+    }
+
+    this.getConditionParams = function() {
+      if (this.condition) {
+        try {
+          var parsedCondition = this.$interpolate(this.conditionExpression)(this.$scope);
+
+          var obj = JSON.parse(parsedCondition);
+          if (typeof obj === 'object') {
+            var resultData = {};
+
+            if (obj.params) {
+              let params;
+              for (var i=0;i<obj.params.length;i++) {
+                var value = obj.params[i].fieldValue;
+
+                if (value.length >= 2 && value.charAt(0) == "'" && value.charAt(value.length-1) == "'") {
+                  value = value.substring(1, value.length-1);
+                }
+
+                if (value !== '' && value !== undefined && value !== null) {
+                  if (params) {
+                    params += "&";
+                  } else {
+                    params = "";
+                  }
+                  params += obj.params[i].fieldName +"="+ encodeURIComponent(value);
+                }
+              }
+
+              return params;
+            }
+          }
+        } catch (e) {
+          console.log(e);
+        }
+      }
+
+    }
+
+    this.getDeletionURL = function(obj, forceOriginalKeys) {
+      var keyObj = this.getKeyValues(obj.__original?obj.__original:obj, forceOriginalKeys);
+
+      var suffixPath = "";
+      if (this.isOData()) {
+        suffixPath = "(";
+      }
+      var count = 0;
+      for (var key in keyObj) {
+        if (keyObj.hasOwnProperty(key)) {
+          if (this.isOData()) {
+            if (count > 0) {
+              suffixPath += ",";
+            }
+            suffixPath += key + "=" + this.getObjectAsString(keyObj[key]);
+          } else {
+            suffixPath += "/" + keyObj[key];
+          }
+          count++;
+        }
+      }
+      if (this.isOData()) {
+        suffixPath += ")";
+      }
+
+      var url = this.entity;
+
+      if (this.entity.endsWith('/')) {
+        url = url.substring(0, url.length-1);
+      }
+
+      url =  url + suffixPath;
+
+      let params = this.getConditionParams();
+      if (params) {
+        url = url + "?" + params;
+      }
+
+      return url;
+    }
+
+    this.getEditionURL = function(obj, forceOriginalKeys) {
+      var keyObj = this.getKeyValues(obj.__original?obj.__original:obj, forceOriginalKeys);
+
+      var suffixPath = "";
+      if (this.isOData()) {
+        suffixPath = "(";
+      }
+      for (var key in keyObj) {
+        if (keyObj.hasOwnProperty(key)) {
+          if (this.isOData()) {
+            suffixPath += ((suffixPath == "(")?'':',')  + key + "=" + this.getObjectAsString(keyObj[key]);
+          } else {
+            suffixPath += "/" + keyObj[key];
+          }
+        }
+      }
+      if (this.isOData()) {
+        suffixPath += ")";
+      }
+
+      var url = this.entity;
+
+      if (this.entity.endsWith('/')) {
+        url = url.substring(0, url.length-1);
+      }
+
+      url =  url + suffixPath;
+
+      let params = this.getConditionParams();
+      if (params) {
+        url = url + "?" + params;
+      }
+
+      return url;
+    }
+
+
+    this.refreshActive = function(onSuccess, onError) {
+      if (this.active && this.active.__status != 'inserted') {
+        var url = this.getEditionURL(this.active);
+        var keyObj = this.getKeyValues(this.active);
+
+        this.$promise = this.getService("GET")({
+          method: "GET",
+          url: url,
+          headers: this.headers
+        }).success(function(rows, status, headers, config) {
+          var row = null;
+
+          if (this.isOData()) {
+            row = rows.d;
+            this.normalizeObject(row);
+          } else {
+            if (rows && rows.length > 0)
+              row = rows[0];
+          }
+
+          var indexFound = -1;
+          var i = 0;
+          this.data.forEach(function(currentRow) {
+            var found = false;
+            var idsFound = 0;
+            var idsTotal = 0;
+            for (var key in keyObj) {
+              idsTotal++;
+              if (currentRow[key] && currentRow[key] === keyObj[key]) {
+                idsFound++;
+              }
+            }
+            if (idsFound == idsTotal)
+              found = true;
+
+            if (found) {
+              indexFound = i;
+              if (row) {
+                this.copy(row, currentRow);
+                this.copy(row, this.active);
+              }
+            }
+            i++;
+          }.bind(this));
+
+          //Atualizou e o registro deixou de existir, remove da lista
+          if (indexFound != -1) {
+            if (this.events.update) {
+              this.callDataSourceEvents('update', this.active);
+            }
+
+            if (onSuccess) {
+              onSuccess(this.active)
+            }
+          } else {
+            if (onError) {
+              onError();
+            }
+          }
+        }.bind(this)).error(function(data, status, headers, config) {
+          if (onError) {
+            onError();
+          }
+        }.bind(this));
+      } else {
+        if (onSuccess) {
+          onSuccess(this.active)
+        }
+      }
+    };
+
+    this.buildURL = function(keyValues, useKeys) {
+      var keyObj = this.getKeyValues(this.active, false, useKeys);
+      if (typeof keyValues !== 'object') {
+        keyValues = [keyValues];
+      }
+
+      var params = "";
+      var count = 0;
+      for (var key in keyObj) {
+        if (keyObj.hasOwnProperty(key)) {
+          var value;
+
+          if (Array.isArray(keyValues)) {
+            value = keyValues[count];
+          } else {
+            value = keyValues[key];
+          }
+
+          if (count > 0) {
+            params += " and ";
+          }
+          params += key + " eq " + this.getObjectAsString(value);
+        }
+
+        count++;
+      }
+
+      return params;
+    }
+
+    this.findObj = function(keyObj, multiple, onSuccess, onError, useKeys) {
+
+      this.keyObj = keyObj;
+      this.keys = useKeys || this.keys;
+
+      this.filterValues = function(elem) {
+        for (let i=0;i<this.keys.length;i++) {
+          if (this.keyObj[i] == elem[this.keys[i]]) {
+            return elem;
+          }
+        }
+      }.bind(this);
+
+      let values = this.data.filter(this.filterValues);
+      if (values && values.length > 0) {
+        if (onSuccess) onSuccess(values);
+        return;
+      }
+
+      var terms = this.buildURL(keyObj, useKeys);
+
+      var filterData;
+
+      filterData = {
+        params: {
+          $filter: terms
+        }
+      }
+
+      if (terms == null || terms.length == 0) {
+        filterData = {}
+      }
+
+      this.fetch(filterData, {
+        success: function(data) {
+          if (onSuccess) {
+            let values = data.filter(this.filterValues);
+            onSuccess(values);
+          }
+        }.bind(this),
+        error: function(error) {
+          if (onError) {
+            onError();
+          }
+        }
+      }, undefined, {lookup: true});
+    }
+
+    this.getColumn = function(index) {
+      var returnValue = [];
+      $.each(this.data, function(key, value) {
+        returnValue.push(value[index]);
+      });
+      return returnValue;
+    };
+
+    // Set this datasource back to the normal state
+    this.onBackNomalState = function() {
+      this.$scope.safeApply(function() {
+        this.busy = false;
+        this.editing = false;
+        this.inserting = false;
+
+        let childrensDs = this.dependentData && this.dependentData.filter( ds => ds.inserting || ds.editing );
+        !childrensDs || childrensDs.forEach( ds => ds.cancel() );
+
+        this.noticeStatusChange();
+      }.bind(this))
+    };
+
+    /**
+     * Cancel the editing or inserting state
+     */
+    this.cancel = function() {
+      if (this.inserting) {
+        if (this.cursor >= 0)
+          this.active = this.data[this.cursor];
+        else
+          this.active = {};
+      }
+      if (this.editing) {
+        this.active = this.lastActive;
+      }
+      this.onBackNomalState();
+      this.lastAction = "cancel"; //TRM
+      if (this.dependentData) {
+        $(this.dependentData).each(function() {
+          this.cleanDependentBuffer();
+        });
+      }
+      this.batchServiceData = [];
+    };
+
+    this.removeODataFields = function(obj) {
+      for (var key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          if (obj[key] && obj[key].__deferred) {
+            delete obj[key];
+          }
+        }
+      }
+
+      return obj;
+    }
+
+
+    this.retrieveDefaultValues = function(obj, callback) {
+      if (this.isEventData() || this.isLocalData()) {
+        this.$scope.safeApply(function() {
+
+          this.active = {};
+          if (this.isLocalData()) {
+            this.active[this.keys[0]] =  this.uuidv4();
+          }
+          this.updateWithParams();
+          if (callback) {
+            callback();
+          }
+        }.bind(this))
+      } else if (obj) {
+        this.active = obj||{};
+        this.updateWithParams();
+        if (callback) {
+          callback();
+        }
+      } else {
+        if (this.entity.indexOf('cronapi') >= 0 || this.isOData()) {
+          // Get an ajax promise
+          var url = this.entity;
+          url += (this.entity.endsWith('/')) ? '__new__' : '/__new__';
+          this.$promise = $httpLegacy({
+            method: "GET",
+            url: this.removeSlash((window.hostApp || "") + url),
+            headers: this.headers
+          }).success(function (data, status, headers, config) {
+            if (this.isOData()) {
+              this.active = this.removeODataFields(data.d);
+              this.normalizeData(this.active)
+            } else {
+              this.active = data;
+            }
+            this.updateWithParams();
+            if (callback) {
+              callback();
+            }
+          }.bind(this)).error(function (data, status, headers, config) {
+            this.active = {};
+            this.updateWithParams();
+            if (callback) {
+              callback();
+            }
+          }.bind(this));
+        } else {
+          this.active = {};
+          this.updateWithParams();
+          if (callback) {
+            callback();
+          }
+        }
+      }
+    };
+
+    var updateObjectValue = function(obj, key, value) {
+      var parts = key.split(".")
+      for (var i=0;i<parts.length;i++) {
+        var keyPart = parts[i];
+        if (i == parts.length - 1) {
+          obj[keyPart] = value;
+        } else {
+          if (obj[keyPart] === undefined || obj[keyPart] == null) {
+            obj[keyPart] = {};
+          }
+
+          obj = obj[keyPart];
+        }
+      }
+    }
+
+
+    this.updateWithParams = function() {
+      if (this.parameters) {
+        var params = this.getParametersMap();
+        for (var key in params) {
+          if (params.hasOwnProperty(key)) {
+            updateObjectValue(this.active, key, params[key]);
+          }
+        }
+      }
+    }
+
+    this.resetFieldsStatus = function() {
+
+        var waitingBecameVisible = setInterval(function() {
+            if ($('input[ng-model*="'+this.name+'."]').is(':visible')) {
+                $('input[ng-model*="'+this.name+'."]:invalid:empty').removeClass('ng-invalid ng-invalid-required');
+                clearInterval(waitingBecameVisible);
+            }
+            else if ($('input[ng-model*="'+this.name+'."].cronMultiSelect')) {
+                clearInterval(waitingBecameVisible);
+            }
+        }, 100);
+
+    };
+
+    this.noticeStatusChange = function() {
+      this.changeTitle();
+      this.handleBeforeCallBack(this.onChangeStatus);
+    };
+
+    this.changeTitle = function() {
+      if (!$('#starter').length || $('#starter').attr('primary-datasource') !== this.name) {
+        return;
+      }
+
+      var currentTitle = this.translate.instant($rootScope.viewTitleOnly);
+      var systemName =  $rootScope.systemName && $rootScope.systemName.length ? ' - ' + $rootScope.systemName : '';
+
+      if (this.inserting)
+          currentTitle += ' - ' + this.translate.instant('Inserting');
+      else if (this.editing)
+          currentTitle += ' - ' + this.translate.instant('Editing');
+
+      $('h1.title:first').text(currentTitle);
+      window.document.title = currentTitle + systemName;
+
+    };
+
+    /**
+     * Put the datasource into the inserting state
+     */
+    this.startInserting = function(item, callback) {
+      this.retrieveDefaultValues(item, function() {
+        if (!this.active.__$id) {
+          this.active.__$id = uuid();
+        }
+
+        if (this.children && this.children.length) {
+          let keys = this.getKeyValues(this.active);
+          for (let key in keys) {
+            if (keys.hasOwnProperty(key)) {
+              if ((keys[key] == null || keys[key] == undefined) && key == '_objectKey') {
+                this.active[key] = "$autogenerated$" + this.uuidv4();
+              }
+            }
+          }
+        }
+
+        this.inserting = true;
+
+        if (this.onStartInserting) {
+          this.onStartInserting();
+        }
+
+        if (callback) {
+          callback(this.active);
+        }
+        if (this.events.creating) {
+          this.callDataSourceEvents('creating', this.active);
+        }
+
+        this.resetFieldsStatus();
+        this.noticeStatusChange();
+
+      }.bind(this));
+    };
+
+    /**
+     * Put the datasource into the editing state
+     */
+    this.startEditing = function(item, callback) {
+      if (item) {
+        this.active = this.copy(item);
+        this.lastActive = item;
+      } else {
+        if (this.data.length == 0) {
+          this.startInserting(null, callback);
+          return;
+        }
+        this.lastActive = this.active;
+        this.active = this.copy(this.active);
+      }
+      this.editing = true;
+      if (callback) {
+        callback(this.active);
+      }
+      if (this.events.editing) {
+        this.callDataSourceEvents('updating', this.active);
+      }
+      this.resetFieldsStatus();
+      this.noticeStatusChange();
+    };
+
+    this.removeSilent = function(object, onSuccess, onError) {
+      this.remove(object, null, false, onSuccess, onError, true);
+    }
+
+    /**
+     * Remove an object from this dataset by using the given id.
+     * the objects
+     */
+    this.remove = function(object, callback, forceDelete, onSuccess, onError, silent) {
+
+      this.busy = true;
+
+      var _remove = async function(object, callback) {
+        if (!object) {
+          object = this.active;
+        }
+
+        var keyObj = this.getKeyValues(object, forceDelete);
+
+        callback = callback || function(empty, hotData, batchPostponed) {
+          if (batchPostponed) {
+            return;
+          }
+          // For each row data
+          for (var i = 0; i < this.data.length; i++) {
+            // current object match with the same
+            var found;
+            if (object.__$id && this.data[i].__$id) {
+              found = this.data[i].__$id == object.__$id;
+            } else {
+              // vey values
+              // Check all keys
+              // Iterate all keys checking if the
+              var dataKeys = this.getKeyValues(this.data[i]);
+              for (var key in keyObj) {
+                if (keyObj.hasOwnProperty(key)) {
+                  if (dataKeys[key] && dataKeys[key] === keyObj[key]) {
+                    found = true;
+                  } else {
+                    // There's a difference between the current object
+                    // and the key values extracted from the object
+                    // that we want to remove
+                    found = false;
+                    break;
+                  }
+                }
+              }
+            }
+
+            if (found) {
+              if (this.dependentLazyPost || this.batchPost) {
+
+                var deleted = {};
+                this.copy(this.data[i], deleted);
+                deleted.__status = 'deleted';
+                deleted.__originalIdx = i;
+                if (this.events.memorydelete) {
+                  this.callDataSourceEvents('memorydelete', deleted);
+                }
+
+                if (this.data[i].__status != 'inserted') {
+                  if (!this.postDeleteData) {
+                    this.postDeleteData = [];
+                  }
+                  this.postDeleteData.push(deleted);
+                  this.hasMemoryData = true;
+                  this.notifyPendingChanges(this.hasMemoryData);
+                }
+              }
+              // If it's the object we're loking for
+              // remove it from the array
+              this.data.splice(i, 1);
+
+              var newCursor = i - 1;
+
+              if (newCursor < 0) {
+                newCursor = 0;
+              }
+
+              if (newCursor > this.data.length - 1) {
+                newCursor = this.data.length;
+              }
+
+              if (this.data[newCursor]) {
+                this.active = this.data[newCursor];
+                this.cursor = newCursor;
+              } else {
+                this.active = null;
+                this.cursor = -1;
+              }
+
+              this.onBackNomalState();
+              break;
+            }
+          }
+          this.handleAfterCallBack(this.onAfterDelete);
+
+          if (onSuccess) {
+            onSuccess(object);
+          }
+
+          if (this.events.delete && hotData) {
+            this.callDataSourceEvents('delete',object);
+          }
+        }.bind(this)
+
+        if (await this.handleBeforeCallBack(this.onBeforeDelete)) {
+          if ((this.dependentLazyPost || this.batchPost) && !forceDelete) {
+            callback();
+          } else {
+            service.remove(this.getDeletionURL(object, forceDelete), object).$promise.error(onError).then(callback);
+          }
+        }
+      }.bind(this);
+
+      if (!forceDelete && !silent && this.deleteMessage && this.deleteMessage.length > 0) {
+
+        let buttonConfirm = {"title": this.translate.instant("yes"), value: function(){_remove(object, callback);}};
+        let buttonCancel = {"title": this.translate.instant("no"), primaryValue: 'true', value: () => {this.filter()}};
+        let modalButtons = [buttonCancel, buttonConfirm];
+
+        window.cronapi.notification.confirmDialogAlert("warning", "", this.deleteMessage, modalButtons);
+      } else {
+        _remove(object, callback);
+      }
+    };
+
+    /**
+     * Get the object keys values from the datasource keylist
+     * PRIVATE FUNCTION
+     */
+    this.getKeyValues = function(rowData, forceOriginalKeys, useKeys) {
+      var keys = useKeys || this.keys;
+
+      var keyValues = {};
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        var rowKey = null;
+        try {
+          rowKey = eval("rowData."+key);
+        } catch(e){
+          //
+        }
+        keyValues[key] = rowKey;
+      }
+
+      return keyValues;
+    }.bind(this);
+
+    this.getFirstKeyValue = function(rowData, forceOriginalKeys) {
+      var keys = this.keys;
+
+      var keyValues = {};
+      for (var i = 0; i < this.keys.length; i++) {
+        var key = this.keys[i];
+        var rowKey = null;
+        try {
+          rowKey = eval("rowData."+key);
+        } catch(e){
+          //
+        }
+        return rowKey;
+      }
+
+    }.bind(this);
+
+    /**
+     * Check if two objects are equals by comparing their keys PRIVATE FUNCTION.
+     */
+    this.objectIsEquals = function(object1, object2) {
+      var keys1 = this.getKeyValues(object1);
+      var keys2 = this.getKeyValues(object2);
+      for (var key in keys1) {
+        if (keys1.hasOwnProperty(key)) {
+          if (!keys2.hasOwnProperty(key)) return false;
+          if (keys1[key] !== keys2[key]) return false;
+        }
+      }
+      return true;
+    }
+
+    /**
+     * Check if the object has more itens to iterate
+     */
+    this.hasNext = function() {
+      return this.data && (this.cursor < this.data.length - 1);
+    };
+
+    /**
+     * Check if the cursor is not at the beginning of the datasource
+     */
+    this.hasPrevious = function() {
+      return this.data && (this.cursor > 0);
+    };
+
+    /**
+     * Check if the object has more itens to iterate
+     */
+    this.order = function(order) {
+      this._savedProps.order = order;
+    };
+
+    /**
+     * Get the values of the active row as an array.
+     * This method will ignore any keys and only return the values
+     */
+    this.getActiveValues = function() {
+      if (this.active && !this._activeValues) {
+        $rootScope.$watch(function(scope) {
+              return this.active;
+            }.bind(this),
+            function(newValue, oldValue) {
+              this._activeValues = this.getRowValues(this.active);
+            }.bind(this), true);
+      }
+      return this._activeValues;
+    }
+
+    this.__defineGetter__('activeValues', function() {
+      return _self.getActiveValues();
+    });
+
+    /**
+     * Get the values of the given row
+     */
+    this.getRowValues = function(rowData) {
+      var arr = [];
+      for (var i in rowData) {
+        if (rowData.hasOwnProperty(i)) {
+          arr.push(rowData[i]);
+        }
+      }
+      return arr;
+    }
+
+    /**
+     *  Get the current item moving the cursor to the next element
+     */
+    this.next = function() {
+      if (!this.hasNext()) {
+        this.nextPage();
+      }
+      this.active = this.copy(this.data[++this.cursor], {});
+      return this.active;
+    };
+
+    /**
+     *  Try to fetch the previous page
+     */
+    this.nextPage = function(callback) {
+      var resourceURL = (window.hostApp || "") + this.entity;
+
+      if (!this.hasNextPage()) {
+        if (callback) {
+          callback();
+        }
+        return;
+      }
+      if (this.apiVersion == 1 || resourceURL.indexOf('/cronapi/') == -1) {
+        this.offset = parseInt(this.offset) + parseInt(this.rowsPerPage);
+      } else {
+        this.offset = parseInt(this.offset) + 1;
+      }
+      if (this._savedProps && this._savedProps.params) {
+        delete this._savedProps.params.$skip;
+      }
+      this.fetch(this._savedProps, {
+        success: function(data) {
+          if (!data || data.length < parseInt(this.rowsPerPage)) {
+            if (this.apiVersion == 1 || resourceURL.indexOf('/cronapi/') == -1) {
+              this.offset = parseInt(this.offset) - this.data.length;
+            }
+          }
+
+          if (callback) {
+            callback();
+          }
+        },
+        canceled: function() {
+          if (callback) {
+            callback();
+          }
+        },
+        error: function() {
+          if (callback) {
+            callback();
+          }
+        }
+      }, true);
+    };
+
+    /**
+     *  Try to fetch the previous page
+     */
+    this.prevPage = function() {
+      if (!this.append && !this.preppend) {
+        this.offset = parseInt(this.offset) - this.data.length;
+        if (this._savedProps && this._savedProps.params) {
+          delete this._savedProps.params.$skip;
+        }
+        if (this.offset < 0) {
+          this.offset = 0;
+        } else if (this.offset >= 0) {
+          this.fetch(this._savedProps, {
+            success: function(data) {
+              if (!data || data.length === 0) {
+                this.offset = 0;
+              }
+            }
+          }, true);
+        }
+      }
+    };
+
+    /**
+     *  Check if has more pages
+     */
+    this.hasNextPage = function() {
+      return this.hasMoreResults && (this.rowsPerPage != -1);
+    };
+
+    /**
+     *  Check if has previews pages
+     */
+    this.hasPrevPage = function() {
+      return this.offset > 0 && !this.append && !this.prepend;
+    };
+
+    /**
+     *  Get the previous item
+     */
+    this.previous = function() {
+      if (!this.hasPrevious()) throw "Dataset Overflor Error";
+      this.active = this.copy(this.data[--this.cursor], {});
+      return this.active;
+    };
+
+    this.findObjInDs = function(rowId, returnCursor) {
+
+      var found = false;
+      var result = null;
+
+      if (rowId === null || rowId === undefined) {
+        return result;
+      }
+
+      var cursor = null;
+      var copyObj = null;
+
+
+      if (typeof rowId === 'object' && rowId !== null) {
+        var dataKeys;
+        if (this.data.length > 0) {
+          dataKeys = this.getKeyValues(this.data[0]);
+        }
+        for (var i = 0; i < this.data.length; i++) {
+          if (rowId.__$id && this.data[i].__$id) {
+            found = rowId.__$id == this.data[i].__$id;
+          } else {
+            var item = this.data[i];
+            for (var key in dataKeys) {
+              if (rowId.hasOwnProperty(key) && rowId[key] === item[key])
+                found = true;
+              else
+                found = false;
+            }
+          }
+          if (found) {
+            cursor = i;
+
+            copyObj = this.copy(this.data[cursor], {});
+
+            var keys = this.getKeyValues(this.data[cursor]);
+            var defined = true;
+            for (var key in keys) {
+              if (keys[key] === undefined) {
+                defined= false;
+                break;
+              }
+            }
+
+            if (!defined) {
+              this.fetchChildren();
+            }
+
+          }
+        }
+      } else {
+        if (Array.isArray(this.keys)) {
+          for (var i = 0; i < this.data.length; i++) {
+            if (this.data[i][this.keys[0]] === rowId) {
+              cursor = i;
+              copyObj = this.copy(this.data[cursor], {});
+              found = true
+            }
+          }
+        }
+      }
+
+      if (copyObj !== null) {
+        result = copyObj;
+        if (returnCursor) {
+          result = {
+            cursor: cursor,
+            obj: copyObj
+          };
+        }
+      }
+
+      return result;
+
+    };
+
+    /**
+     *  Moves the cursor to the specified item
+     */
+    this.goTo = function(rowId, serverQuery) {
+
+      var result = this.findObjInDs(rowId, true);
+      if (result !== null) {
+        this.cursor = result.cursor;
+        this.active = result.obj;
+        return this.active;
+      }
+      return result;
+    };
+
+    /**
+     *  Get the current cursor index
+     */
+    this.getCursor = function() {
+      return this.cursor;
+    };
+
+    /**
+     *  filter dataset by URL
+     */
+    this.filter = function(url, callback) {
+      var oldoffset = this.offset;
+      this.offset = 0;
+      this.fetch({
+        path: url
+      }, {
+        beforeFill: function(oldData) {
+          this.cleanup();
+        },
+        error: function(error) {
+          this.offset = oldoffset;
+        },
+        success: function(data) {
+          if (callback) {
+            callback(data);
+          }
+        }
+      });
+    };
+
+    this.doSearchAll = function(terms, caseInsensitive) {
+      this.searchTimeout = null;
+      var oldoffset = this.offset;
+      this.offset = 0;
+      this.fetch({
+        params: {
+          filter: "%"+terms+"%",
+          filterCaseInsensitive: (caseInsensitive?true:false)
+        }
+      }, {
+        beforeFill: function(oldData) {
+          this.cleanup();
+        },
+        error: function(error) {
+          this.offset = oldoffset;
+        }
+      });
+    }
+
+    this.searchAll = function(terms, caseInsensitive) {
+      if (this.searchTimeout) {
+        clearTimeout(this.searchTimeout);
+        this.searchTimeout = null;
+      }
+
+      this.searchTimeout = setTimeout(function() {
+        this.doSearchAll(terms, caseInsensitive);
+      }.bind(this), 500);
+    };
+
+    this.doSearch = function(terms, caseInsensitive) {
+      this.searchTimeout = null;
+      var oldoffset = this.offset;
+      this.offset = 0;
+      var filterData;
+      if (this.isOData()) {
+        filterData = {
+          params: {
+            $filter: terms
+          }
+        }
+
+        if (terms == null || terms.length == 0) {
+          filterData = {}
+        }
+      } else {
+        filterData = {
+          params: {
+            filter: terms,
+            filterCaseInsensitive: (caseInsensitive?true:false)
+          }
+        }
+      }
+
+      this.fetch(filterData, {
+        beforeFill: function(oldData) {
+          this.cleanup();
+        },
+        error: function(error) {
+          this.offset = oldoffset;
+        }
+      });
+    }
+
+    this.search = function(terms, caseInsensitive) {
+      if (this.searchTimeout) {
+        clearTimeout(this.searchTimeout);
+        this.searchTimeout = null;
+      }
+
+      this.caseInsensitive = caseInsensitive;
+      this.terms = terms;
+
+      this.searchTimeout = setTimeout(function() {
+        this.doSearch(terms, caseInsensitive);
+      }.bind(this), 500);
+    };
+
+    /**
+     *  refresh dataset by URL and queryParams,
+     */
+    this.refresh = function(query, url, minChar) {
+      this.cleanup();
+      if (minChar === undefined) {
+        minChar = 0;
+      }
+      if (query.length >= minChar) {
+        this.filter(url + "/" + query);
+      }
+    };
+
+    /**
+     * Cleanup datasource
+     */
+    this.cleanup = function(cleanOptions) {
+      if (!cleanOptions) {
+        cleanOptions = {};
+      }
+      this.offset = 0;
+      this.rowsCount = -1;
+      this.data.length = 0;
+      if (!cleanOptions.ignoreAtive) {
+        this.cursor = -1;
+        this.active = {};
+      }
+      this.hasMoreResults = false;
+    }
+
+    /**
+     *  Get the current row data
+     */
+    this.current = function() {
+      return this.active || this.data[0];
+    };
+
+    this.getLink = function(rel) {
+      if (this.links) {
+        for (var i = 0; i < this.links.length; i++) {
+          if (this.links[i].rel == rel) {
+            return this.links[i].href;
+          }
+        }
+      }
+    }
+
+    this.isOData = function() {
+      return this.entity.indexOf('odata') > 0;
+    }
+
+    this.isEventData = function() {
+      return this.onGET !== undefined && this.onGET !== null && this.onGET !== '';
+    }
+
+    this.isLocalData = function() {
+      return this.entity.indexOf('local://') == 0;
+    }
+
+    this.normalizeValue = function(value, unquote) {
+      if (unquote == null || unquote == undefined) {
+        unquote = false;
+      }
+      return window.oDataToObj(value, unquote);
+    }
+
+    this.normalizeObject = function(data) {
+      for (var key in data) {
+        if (data.hasOwnProperty(key)) {
+          var d = data[key];
+          if (d) {
+            if (typeof d == 'object') {
+              this.normalizeObject(d);
+            }
+
+            else {
+              data[key] = this.normalizeValue(d);
+            }
+
+          }
+        }
+      }
+    }
+
+    this.normalizeData = function(data) {
+      if (data) {
+        delete data.__metadata;
+        for (var i = 0; i < data.length; i++) {
+          this.normalizeObject(data[i]);
+        }
+      }
+      return data;
+    }
+
+    this.getAllData = function() {
+      var array = [];
+
+      array = array.concat(this.data);
+
+      if (this.memoryData) {
+        for (key in this.memoryData) {
+          if (this.memoryData.hasOwnProperty(key)) {
+            var mem = this.memoryData[key];
+            if (mem.data) {
+              array = array.concat(mem.data);
+            }
+          }
+        }
+      }
+
+      if (this.postDeleteData) {
+        array = array.concat(this.postDeleteData);
+      }
+
+      return array;
+    }
+
+    this.getParametersMap = function(parentId) {
+      var map = {};
+
+      var parameters;
+
+      var obj;
+
+      var mapParams;
+
+      if (parentId) {
+        parameters = this.parametersExpression;
+        var arr = eval(this.dependentLazyPost).getAllData();
+
+        for (var i=0;i<arr.length;i++) {
+          if (arr[i].__$id == parentId) {
+            obj = arr[i];
+            break;
+          }
+        }
+
+        mapParams = this.getParametersMap();
+      } else {
+        parameters =  this.parameters;
+      }
+
+      if (parameters && parameters.length > 0) {
+        var parts = parameters.split(";")
+        for (var i=0;i<parts.length;i++) {
+          var part = parts[i];
+          var binary = part.split("=");
+          if (binary.length == 2) {
+            var value = binary[1];
+            if (parentId) {
+              if (binary[1].match(DEP_PATTERN)) {
+                var g = DEP_PATTERN.exec(value);
+                if (g[1].indexOf(".active.") != -1) {
+                  var field = g[1].replace(this.dependentLazyPost + ".active.", "");
+                  if (obj) {
+                    map[binary[0]] = obj[field];
+                  }
+                } else {
+                  map[binary[0]] = mapParams[binary[0]];
+                }
+              } else {
+                map[binary[0]] = mapParams[binary[0]];
+              }
+            } else {
+              map[binary[0]] = binary[1] ? this.normalizeValue(value, true) : null;
+            }
+          }
+        }
+      }
+
+      return map;
+    }
+
+    this.setParameters = function(params) {
+      this.parameters = params;
+      this.fetch({
+        params: {}
+      });
+    }
+
+    this.getParametersBatchExpression = function(parentId) {
+      var expression = "";
+
+      var parameters;
+
+      var obj;
+
+      parameters = this.parametersExpression;
+      let ds = eval(this.dependentLazyPost);
+
+      if (ds) {
+        var arr = ds.getAllData();
+        if (ds.active && ds.active.__$id == parentId) {
+          obj = ds.active;
+        } else {
+          for (var i = 0; i < arr.length; i++) {
+            if (arr[i].__$id == parentId) {
+              obj = arr[i];
+              break;
+            }
+          }
+        }
+      }
+
+      if (parameters && parameters.length > 0) {
+        var parts = parameters.split(";")
+        for (var i=0;i<parts.length;i++) {
+          var part = parts[i];
+          var binary = part.split("=");
+          if (binary.length == 2) {
+            var value = binary[1];
+            if (binary[1].match(DEP_PATTERN)) {
+              var g = DEP_PATTERN.exec(value);
+              if (g[1].indexOf(".active.") != -1) {
+                var field = g[1].replace(this.dependentLazyPost + ".active.", "");
+                if (obj) {
+                  if (expression != '') {
+                    expression += ",";
+                  }
+                  expression = binary[0] + ":" + "$"+parentId+"."+field;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return expression;
+    }
+
+    this.removeSlash = function(u) {
+      if (u.indexOf("http://") == 0) {
+        return "http://" + u.substring(7).split("//").join("/");
+      }
+
+      else if (u.indexOf("https://") == 0) {
+        return "https://" + u.substring(8).split("//").join("/");
+      }
+
+      return u;
+    }
+
+    this.setDataSourceEvents = function(events) {
+      this.events = events;
+    }
+
+    this.addDataSourceEvents = function(events) {
+      for (var key in events) {
+        if (events.hasOwnProperty(key)) {
+          if (!this.events[key]) {
+            this.events[key] = [];
+          }
+
+          if (Object.prototype.toString.call(this.events[key]) !== '[object Array]') {
+            this.events[key] = [this.events[key]];
+          }
+
+          this.events[key].push(events[key]);
+        }
+      }
+    }
+
+    this.removeDataSourceEvents = function(events) {
+      for (var key in events) {
+        if (events.hasOwnProperty(key)) {
+          if (!this.events[key]) {
+            this.events[key] = [];
+          }
+
+          if (Object.prototype.toString.call(this.events[key]) !== '[object Array]') {
+            this.events[key] = [this.events[key]];
+          }
+
+          var arr = [].concat(this.events[key]);
+          for (var i =0;i<arr.length;i++) {
+            if (arr[i] == events[key]) {
+              this.events[key].splice(i, 1);
+            }
+          }
+        }
+      }
+    }
+
+      this.callDataSourceEvents = function(key, param) {
+        if (this.events) {
+          var event = this.events[key];
+          if (event) {
+            if (Object.prototype.toString.call(event) !== '[object Array]') {
+              event = [event];
+            }
+
+            var args = [];
+            for (var j = 1; j < arguments.length; j++) {
+              args.push(arguments[j]);
+            }
+
+            var toBeExecutedAlways = [];
+            for (var j = 0; j < event.length; j++)
+              toBeExecutedAlways.push(event[j]);
+
+            for (var i = 0; i < toBeExecutedAlways.length; i++) {
+              try {
+                toBeExecutedAlways[i].apply(null, args);
+              }
+              catch (err) {
+                console.log('Error', 'Event no more exist in datasource');
+              }
+            }
+          }
+        }
+      }
+
+    this.storeInMemory = function(id) {
+      if (!this.memoryData) {
+        this.memoryData = {};
+      }
+
+      var memory = {
+        data: [],
+        cursor: this.cursor,
+        params: this.getParametersMap(),
+        rowCount: this.getRowsCount()
+      }
+
+      memory.data = deepCopy(this.data, memory.data);
+
+      this.memoryData[id] = memory;
+    }
+
+    this.restoreFromMemory = function(id) {
+      if (!this.memoryData) {
+        this.memoryData = {};
+      }
+
+      var mem = this.memoryData[id];
+
+      if (mem) {
+        this.cursor = mem.cursor;
+        this.rowsCount = mem.rowCount;
+      }
+
+      delete this.memoryData[id]
+
+      return deepCopy(mem.data);
+    }
+
+    this.hasPendingChanges = function() {
+      var changed = this.hasMemoryData;
+      if (this.children) {
+        $(this.children).each(function() {
+          changed = changed || this.hasPendingChanges();
+        });
+      }
+
+      return changed;
+    }
+
+    this.isPostingBatchData = function() {
+      var isPosting = this.postingBatch==true;
+      if (this.dependentLazyPost) {
+        isPosting = isPosting || eval(this.dependentLazyPost).isPostingBatchData();
+      }
+
+      return isPosting;
+    }
+
+    this.fetchChildren = function(callback) {
+      if (this.children) {
+        reduce(this.children, function(item, resolve) {
+          item.fetch({}, function() {
+            resolve();
+          });
+        }.bind(this), function() {
+          if (callback) {
+            callback();
+          }
+        }.bind(this));
+      } else {
+        if (callback) {
+          callback();
+        }
+      }
+    }
+
+    var splitExpression = function(v) {
+
+      var pair = null;
+      var operator;
+
+      if (v.indexOf("@=") != -1) {
+        pair = v.trim().split("@=");
+        operator = "=";
+      } else if (v.indexOf("<=") != -1) {
+        pair = v.trim().split("<=");
+        operator = "<=";
+      } else if (v.indexOf(">=") != -1) {
+        pair = v.trim().split(">=");
+        operator = ">=";
+      } else if (v.indexOf(">") != -1) {
+        pair = v.trim().split(">");
+        operator = ">";
+      } else if (v.indexOf("<") != -1) {
+        pair = v.trim().split("<");
+        operator = "<";
+      } else {
+        pair = v.trim().split("=");
+        operator = "=";
+      }
+
+      var typeElement = typeof this.normalizeValue(pair[1], true);
+
+      if (this.isOData()) {
+        if (operator == "=" && typeElement == 'string') {
+          return "startswith(tolower("+pair[0]+"), "+pair[1].toLowerCase()+")";
+        }
+        else if (operator == "=") {
+          return pair[0] + " eq "+pair[1];
+        }
+        else if (operator == "!=") {
+          return pair[0] + " ne "+pair[1];
+        }
+        else if (operator == ">") {
+          return pair[0] + " gt {"+pair[1];
+        }
+        else if (operator == ">=") {
+          return pair[0] + " ge "+pair[1];
+        }
+        else if (operator == "<") {
+          return pair[0] + " lt "+pair[1];
+        }
+        else if (operator == "<=") {
+          return pair[0] + " le "+pair[1];
+        }
+      } else {
+        if (typeElement == 'string') {
+          return pair[0] + '@' + operator + '%'+pair[1]+'%';
+        } else {
+          return pair[0] + operator + pair[1];
+        }
+      }
+    }.bind(this);
+
+    var parseFilterExpression = function(expression) {
+      var filter = "";
+      if (expression) {
+        var parts = expression.split(";");
+        var doParser = true;
+        if (parts.length > 0) {
+          var regex = /[\w\d]+=.+/gm
+          for (var i = 0; i < parts.length; i++) {
+            var match = parts[i].match(regex);
+            if (!match){
+              doParser = false;
+              break;
+            }
+          }
+        }
+
+        if (doParser) {
+          for (var i = 0; i < parts.length; i++) {
+            var data = splitExpression(parts[i]);
+            if (filter != "") {
+              filter += this.isOData()?" and ":";";
+            }
+            filter += data;
+          }
+        } else {
+          filter = expression;
+        }
+      }
+
+      return filter;
+    }.bind(this);
+
+    var getQueryOperator = function(operator) {
+      if (operator == '=') {
+        return ' eq ';
+      } else if (operator == '!=') {
+        return ' ne ';
+      } else if (operator == '>') {
+        return ' gt ';
+      } else if (operator == '>=') {
+        return ' ge ';
+      } else if (operator == '<') {
+        return ' lt ';
+      } else if (operator == '<=') {
+        return ' le ';
+      }
+    }.bind(this);
+
+    var executeRight = function(right) {
+      var result = 'null';
+      if (right != null && right != undefined) {
+        if (right.startsWith(':') || right.startsWith('datetimeoffset\'') || right.startsWith('datetime\'') ) {
+          result = right;
+        }
+        else {
+          result = eval(right);
+          if (result instanceof Date) {
+            result = "datetimeoffset'" + result.toISOString() + "'";
+          }
+          else if (typeof result == 'string') {
+            result = "'" + result + "'";
+          }
+
+          else if (result === undefined || result == null) {
+            result = 'null';
+          }
+        }
+      }
+      return result;
+    }.bind(this);
+
+    this.isEmpty = function(value) {
+      return value === '' || value === undefined || value === null || value === '\'\'' || value === 'null';
+    }
+
+    this.getFieldFromSchema = function (name) {
+      if (this.schema) {
+        for (var i = 0; i < this.schema.length; i++) {
+          if (this.schema[i].name === name)
+            return this.schema[i].type;
+        }
+      }
+      return null;
+    };
+
+    this.parserCondition = function (data, strategy, resultData) {
+      var result = '';
+      var operation = data.type;
+
+      if (!strategy) {
+        strategy = "default";
+      }
+
+      if (data.args) {
+        for (var i = 0; i < data.args.length; i++) {
+          var arg = data.args[i];
+          var oper = operation;
+
+          if (arg.args && arg.args.length > 0) {
+
+            var value = this.parserCondition(arg, strategy)
+
+            if (this.isEmpty(value) && (strategy == 'ignore' || strategy == 'clean')) {
+              if (resultData) {
+                resultData.clean = (strategy == 'clean');
+              }
+            } else {
+
+              if (!this.isEmpty(value)) {
+                if (resultData) {
+                  resultData.count = resultData.count ? resultData.count + 1 : 1;
+                }
+                if (result != '') {
+                  result += ' ' + oper.toLowerCase() + ' ';
+                }
+
+                result += '( ' + value + ' ) ';
+              }
+            }
+          } else {
+            var value = executeRight(arg.right);
+
+            if (this.isEmpty(value) && (strategy == 'ignore' || strategy == 'clean' || strategy == 'wait')) {
+              if (resultData) {
+                resultData.clean = (strategy == 'clean');
+                resultData.wait = (strategy == 'wait');
+              }
+            } else {
+              if (!this.isEmpty(value)) {
+
+                var canContinue = true;
+                var isDate = this.getFieldFromSchema(arg.left) === 'DateTime';
+                var objDateMoment = undefined;
+                if (isDate && value.indexOf('datetime') === -1) {
+                  objDateMoment = this.$scope.cronapi.dateTime.getMomentObj(value);
+                  canContinue = objDateMoment.isValid()
+                }
+
+                if (canContinue) {
+
+                  if (resultData) {
+                    resultData.count = resultData.count ? resultData.count + 1 : 1;
+                  }
+                  if (result != '') {
+                    result += ' ' + oper.toLowerCase() + ' ';
+                  }
+
+                  if (arg.type == '%') {
+                    if (this.isLocalData()) {
+                      result += "contains("+arg.left+", "+value.toLowerCase()+")";
+                    } else {
+                      result += "substringof("+value.toLowerCase()+", tolower("+arg.left+"))";
+                    }
+                  } else {
+                    if (objDateMoment) {
+                      var momentTimezoneOffset = objDateMoment.toDate().getTimezoneOffset();
+                      var adjustOffset = timeZoneOffset - momentTimezoneOffset;
+                      objDateMoment.add(adjustOffset, 'minutes');
+                      result += arg.left + getQueryOperator(arg.type) + "datetimeoffset'"+objDateMoment.toISOString()+"'";
+                    }
+                    else {
+                      result += arg.left + getQueryOperator(arg.type) + value;
+                    }
+                  }
+
+                }
+              }
+            }
+          }
+        }
+      }
+      return result.trim();
+    }.bind(this);
+
+    this.refreshData = function(callback) {
+      if (this.lastFetch && !this.hasMemoryData && this.enabled && !this.inserting && !this.editing) {
+        if (window.Pace) {
+          window.Pace.options.ajax.trackWebSockets = false;
+          window.Pace.options.ajax.trackMethods = [];
+        }
+
+        var after = function() {
+          if (window.Pace) {
+            window.Pace.options.ajax.trackWebSockets = true;
+            window.Pace.options.ajax.trackMethods = ["PUT", "POST", "GET"];
+          }
+          if (callback) {
+            callback();
+          }
+        };
+
+        var cb = {
+          success: after,
+          error: after
+        }
+        this.lastFilter = null;
+        this.lastFetch.fetchOptions = this.lastFetch.fetchOptions || {};
+        this.lastFetch.fetchOptions.active = this.copy(this.active);
+        this.lastFetch.fetchOptions.active.__$id = undefined;
+        this.fetch(this.lastFetch.properties, cb, this.lastFetch.isNextOrPrev, this.lastFetch.fetchOptions, true);
+      } else {
+        if (callback) {
+          callback();
+        }
+      }
+    }
+
+    this.startAutoRefresh = function() {
+      if (this.autoRefresh > 0) {
+        setTimeout(function() {
+          this.refreshData(function() {
+            this.startAutoRefresh();
+          }.bind(this));
+        }.bind(this), this.autoRefresh);
+      }
+    }
+
+    this.isParentBusy = function() {
+      if (this.dependentLazyPost) {
+        return eval(this.dependentLazyPost).busy || eval(this.dependentLazyPost).isParentBusy();
+      }
+
+      return false;
+    }
+
+    /**
+     *  Fetch all data from the server
+     */
+
+    this.fetch = function(properties, callbacksObj, isNextOrPrev, fetchOptions, silent, fromVisibleEvent) {
+
+      if (!fetchOptions) {
+        fetchOptions = {};
+      }
+
+      let busy = this.busy;
+      let masterDetail = this.parameters && this.parameters.length > 0;
+      if (fetchOptions.ignoreBusy) {
+        busy = false;
+      }
+      if (busy || this.postingBatch || (!masterDetail && this.isParentBusy())) {
+        setTimeout(function() {
+          this.fetch(properties, callbacksObj, isNextOrPrev, fetchOptions);
+        }.bind(this), 1000);
+        return;
+      }
+
+      var callbacks = callbacksObj || {};
+
+      this.lastFetch = {
+        properties: properties,
+        isNextOrPrev: isNextOrPrev,
+        fetchOptions: fetchOptions
+      }
+
+      // Success Handler
+      var sucessHandler = function(data, headers, raw) {
+        var springVersion = false;
+        this.responseHeaders = headers || {};
+        var total = -1;
+
+        if (this.entity.indexOf('//') > -1 && this.entity.indexOf('://') < 0)
+          data = [];
+        if (!raw) {
+          if (data) {
+            if (Object.prototype.toString.call(data) !== '[object Array]') {
+              if (data && data.links && Object.prototype.toString.call(data.content) === '[object Array]') {
+                this.links = data.links;
+                data = data.content;
+                springVersion = true;
+              }
+              else if (this.isOData()) {
+                total = parseInt(data.d.__count);
+                data = data.d.results;
+                this.normalizeData(data)
+              }
+
+              else if (this.isLocalData()) {
+                total = data.total_rows;
+                data = data.rows;
+                this.normalizeData(data)
+              }
+
+              else {
+                data = [data];
+              }
+            }
+          } else {
+            data = [];
+          }
+        }
+
+        for (var n=0;n<data.length;n++) {
+          if (!data[n].__$id) {
+            data[n].__$id = uuid();
+          }
+        }
+
+        if (!fetchOptions.lookup) {
+
+          this.fetched = true;
+
+          // Call the before fill callback
+          if (callbacks.beforeFill) callbacks.beforeFill.apply(this, this.data);
+
+          if (isNextOrPrev) {
+            // If prepend property was set.
+            // Add the new data before the old one
+            if (this.prepend) Array.prototype.unshift.apply(this.data, data);
+
+            // If append property was set.
+            // Add the new data after the old one
+            if (this.append) Array.prototype.push.apply(this.data, data);
+
+            // When neither  nor preppend was set
+            // Just replace the current data
+            if (!this.prepend && !this.append) {
+              Array.prototype.push.apply(this.data, data);
+              if (!fetchOptions.ignoreAtive) {
+                if (this.data.length > 0) {
+                  if (fetchOptions.active) {
+                    this.goTo(fetchOptions.active);
+                  } else {
+                    this.active = data[0];
+                    this.cursor = 0;
+                  }
+                } else {
+                  this.active = {};
+                  this.cursor = -1;
+                }
+              }
+            }
+          } else {
+            this.cleanup(fetchOptions);
+            if (total != -1) {
+              this.rowsCount = total;
+            }
+            Array.prototype.push.apply(this.data, data);
+            if (this.data.length > 0) {
+              if (!fetchOptions.ignoreAtive) {
+                if (fetchOptions.active) {
+                  this.goTo(fetchOptions.active);
+                } else {
+                  this.active = data[0];
+                  this.cursor = 0;
+                }
+              }
+            }
+          }
+
+          this.columns = [];
+          if (this.data.length > 0) {
+            for (var i = 0; i < this.data[0].length; i++) {
+              this.columns.push(this.getColumn(i));
+            }
+          }
+        }
+
+        if (callbacks.success) callbacks.success.call(this, data);
+
+        if (!fetchOptions.lookup) {
+          if (this.events.read) {
+            this.callDataSourceEvents('read', data);
+          }
+
+          this.hasMoreResults = (data.length >= this.rowsPerPage);
+
+          if (springVersion) {
+            this.hasMoreResults = this.getLink("next") != null;
+          }
+
+          /*
+              *  Register a watcher for data
+              *  if the autopost property was set
+              *  It means that any change on dataset items will
+              *  generate a new request on the server
+              */
+          if (this.autoPost) {
+            this.startAutoPost();
+          }
+
+          this.loaded = true;
+          this.loadedFinish = true;
+          this.handleAfterCallBack(this.onAfterFill);
+          var thisDatasourceName = this.name;
+          if (!this.isOData()) {
+            $('datasource').each(function (idx, elem) {
+              var dependentBy = null;
+              var dependent = window[elem.getAttribute('name')];
+              if (dependent && elem.getAttribute('dependent-by')
+                  !== "" && elem.getAttribute('dependent-by')
+                  != null) {
+                try {
+                  dependentBy = JSON.parse(
+                      elem.getAttribute('dependent-by'));
+                } catch (ex) {
+                  dependentBy = eval(
+                      elem.getAttribute('dependent-by'));
+                }
+
+                if (dependentBy) {
+                  if (dependentBy.name == thisDatasourceName) {
+                    if (!dependent.filterURL)
+                      eval(dependent.name).fetch();
+                    //if has filter, the filter observer will be called
+                  }
+                } else {
+                  console.log('O dependente ' + elem.getAttribute(
+                      'dependent-by') + ' do pai '
+                      + thisDatasourceName + ' ainda não existe.')
+                }
+              }
+            });
+          }
+        }
+        if (this.startMode == 'insert') {
+          this.startMode = null;
+          this.startInserting();
+        }
+
+        if (this.startMode == 'edit') {
+          this.startMode = null;
+          this.startEditing();
+        }
+
+        if (this.autoRefresh > 0 && !this.autoRefreshStarted) {
+          this.autoRefreshStarted = true;
+          this.startAutoRefresh();
+        }
+      }.bind(this);
+
+      // Ignore any call if the datasource is busy (fetching another request)
+      if (this.busy) {
+        if (callbacks.canceled) {
+          callbacks.canceled();
+        }
+        return;
+      }
+
+      //Ignore call witouth ids if not http:// or https://
+      if (this.entity.indexOf('//') > -1 && this.entity.indexOf('://') < 0) {
+        if (callbacks.canceled) {
+          callbacks.canceled();
+        }
+        return;
+      }
+
+      if (!this.enabled) {
+        this.cleanup();
+        if (callbacks.canceled) {
+          callbacks.canceled();
+        }
+        return;
+      }
+
+      var props = properties || {};
+
+      // Adjust property parameters and the endpoint url
+      props.params = props.params || {};
+      var resourceURL = (window.hostApp || "") + this.entity + (props.path || this.lastFilterParsed || "");
+
+      var filter = "";
+      var order = "";
+      var cleanData = false;
+      var canProceed = true;
+
+      if (this.parameters && this.parameters.length > 0) {
+
+        var parsedParameters;
+
+        if (fetchOptions.lookup) {
+          parsedParameters = this.$interpolate(this.parametersExpression)(this.$scope);
+        } else {
+          parsedParameters = this.parameters;
+        }
+
+        var parts = parsedParameters.split(";");
+        var partsExpression = this.parametersExpression.split(";");
+        for (var i=0;i<parts.length;i++) {
+          var part = parts[i];
+          var partExpression = partsExpression[i];
+
+          var binary = part.split("=");
+          var binaryExpression = partExpression.split("=");
+          if (binary.length == 2) {
+            var filterClause;
+
+            var g = DEP_PATTERN.exec(binaryExpression[1]);
+            if ((this.isEmpty(binary[1]) || this.isAutoGeneratedValue(binary[1])) && this.dependentLazyPost && g[1] && g[1].startsWith(this.dependentLazyPost+".")) {
+              if (this.parametersNullStrategy == "clean" || this.parametersNullStrategy == "default") {
+                cleanData = true;
+                var dds = eval(this.dependentLazyPost);
+                if (dds.active && dds.active.__$id) {
+                  filterClause = eval(this.dependentLazyPost).active.__$id;
+                } else {
+                  filterClause = "memory";
+                }
+              }
+            } else {
+              if (this.isEmpty(binary[1])) {
+                if (this.parametersNullStrategy == "clean" || this.parametersNullStrategy == "default") {
+                  filterClause = 'null';
+                  cleanData = true;
+                }
+              } else {
+                filterClause = this.getObjectAsString(this.normalizeValue(binary[1], true));
+              }
+            }
+
+            if (filterClause) {
+              filterClause = binary[0] + getQueryOperator("=") + filterClause;
+
+              if (filter != "") {
+                filter += this.isOData()?" and ":";";
+              }
+
+              filter += filterClause;
+            }
+          }
+        }
+      }
+
+      if (!canProceed) {
+        if (callbacks.canceled) {
+          callbacks.canceled();
+        }
+        return;
+      }
+
+      var urlParams;
+      let waitData = false;
+
+      if (this.condition) {
+        try {
+          var parsedCondition;
+
+          if (fetchOptions.lookup) {
+            parsedCondition = this.$interpolate(this.conditionExpression)(this.$scope);
+          } else {
+            parsedCondition = this.condition;
+          }
+
+          var obj = JSON.parse(parsedCondition);
+          if (typeof obj === 'object') {
+            var resultData = {};
+            if (obj.expression) {
+              this.conditionOdata = this.parserCondition(obj.expression, this.parametersNullStrategy, resultData);
+            } else {
+              this.conditionOdata = this.parserCondition(obj, this.parametersNullStrategy, resultData);
+            }
+
+            var filterCount = this.conditionExpression.match(/{{(?!null).*?}}/g).length;
+
+            if (!cleanData && resultData.clean) {
+              cleanData = true;
+            }
+            if (!cleanData && resultData.wait) {
+              waitData = true;
+            }
+            if (!cleanData && this.loadDataStrategy === "one" && (!resultData.count || resultData.count < 1)) {
+              cleanData = true;
+            }
+            if (!cleanData && this.loadDataStrategy === "all" && filterCount && (!resultData.count || resultData.count < filterCount)) {
+              cleanData = true;
+            }
+            if (!cleanData && this.loadDataStrategy === "button" && fetchOptions.origin !== "button") {
+              cleanData = true;
+            }
+
+            if (obj.params) {
+              for (var i=0;i<obj.params.length;i++) {
+                var value = obj.params[i].fieldValue;
+
+                if (value.length >= 2 && value.charAt(0) == "'" && value.charAt(value.length-1) == "'") {
+                  value = value.substring(1, value.length-1);
+                }
+
+                if (value !== '' && value !== undefined && value !== null) {
+                  props.params[obj.params[i].fieldName] = value;
+                }
+              }
+            }
+          } else {
+            this.conditionOdata = this.condition;
+          }
+        } catch (e) {
+          console.log(e);
+        }
+
+        var conditionFilter = parseFilterExpression(this.conditionOdata);
+        if (conditionFilter) {
+          if (filter != "") {
+            filter += this.isOData()?" and ":";";
+          }
+
+          filter += conditionFilter;
+        }
+      }
+
+      if (this.orderBy) {
+        var orders = this.orderBy.split(";");
+        for (var i=0;i<orders.length;i++) {
+          var orderField = orders[i];
+          if (orderField) {
+            if (order != "") {
+              order += this.isOData()?",":";";
+            }
+            if (this.isOData()) {
+              order += orderField.replace("|ASC", " asc").replace("|DESC", " desc");
+            } else {
+              order += orderField;
+            }
+          }
+        }
+      }
+
+      //Check request, if  is dependentLazyPost, break old request
+      if (this.dependentLazyPost && !this.parameters && !this.condition && !fromVisibleEvent) {
+        if (eval(this.dependentLazyPost).active) {
+          var checkRequestId = '';
+          var keyDependentLazyPost = this.getKeyValues(eval(this.dependentLazyPost).active);
+          for (var key in keyDependentLazyPost) {
+            checkRequestId = keyDependentLazyPost[key]
+            break;
+          }
+          if (checkRequestId && checkRequestId.length > 0)
+            if (resourceURL.indexOf(checkRequestId) == -1) {
+              if (callbacks.canceled) {
+                callbacks.canceled();
+              }
+              return;
+            }
+        }
+      }
+
+      // Set Limit and offset
+      if (this.rowsPerPage > 0) {
+        if (this.isOData()) {
+          if (props.params.$top === undefined || props.params.$top === null) {
+            props.params.$top = this.rowsPerPage;
+          }
+          if (props.params.$skip === undefined || props.params.$skip === null) {
+            props.params.$skip = parseInt(this.offset) * parseInt(this.rowsPerPage);
+          }
+          props.params.$inlinecount = 'allpages';
+        } else {
+          if (this.apiVersion == 1 || resourceURL.indexOf('/cronapi/') == -1) {
+            props.params.limit = this.rowsPerPage;
+            props.params.offset = this.offset;
+          } else {
+            props.params.size = this.rowsPerPage;
+            props.params.page = this.offset;
+          }
+        }
+      }
+
+      var paramFilter = null;
+
+      if (this.isOData() && props.params.$filter) {
+        paramFilter =  props.params.$filter;
+      }
+
+      if (!this.isOData() && props.params.filter) {
+        paramFilter =  props.params.filter;
+      }
+
+      if (paramFilter) {
+        if (filter && filter != '') {
+          if (this.isOData()) {
+            filter += " and (";
+            filter += paramFilter + ")";
+          } else {
+            filter += ";";
+            filter += paramFilter;
+          }
+        } else {
+          filter = paramFilter;
+        }
+      }
+
+      var paramOrder = null;
+
+      if (this.isOData() && props.params.$orderby) {
+        paramOrder =  props.params.$orderby;
+      }
+
+      if (!this.isOData() && props.params.order) {
+        paramOrder =  props.params.order;
+      }
+
+      if (paramOrder) {
+        order = paramOrder;
+      }
+
+      if (filter) {
+        if (this.isOData()) {
+          props.params.$filter = filter;
+        } else {
+          props.params.filter = filter;
+        }
+      }
+
+      if (order) {
+        if (this.isOData()) {
+          props.params.$orderby = order;
+        } else {
+          props.params.order = order;
+        }
+      }
+
+      var localSuccess;
+
+      if (this.hasMemoryData && filter) {
+        if (!this.memoryData) {
+          this.memoryData = {};
+        }
+
+        if (this.lastFilter == filter) {
+          if (callbacks.canceled) {
+            callbacks.canceled();
+          }
+          return;
+        }
+
+        var id = filter;
+        var mem = this.memoryData[id];
+
+        if (mem) {
+          this.storeInMemory(this.lastFilter);
+          var data = this.restoreFromMemory(id);
+          this.lastFilter = filter;
+          sucessHandler(data, null, true);
+          return;
+        } else {
+          localSuccess = function() {
+            this.storeInMemory(this.lastFilter);
+          }.bind(this);
+        }
+      }
+
+      // Stop auto post for awhile
+      this.stopAutoPost();
+
+      // Store the last configuration for late use
+      this._savedProps = props;
+
+      if (waitData) {
+        setTimeout(function() {
+          fetchOptions.ignoreBusy = true;
+          this.fetch(properties, callbacksObj, isNextOrPrev, fetchOptions);
+        }.bind(this), 100);
+        return;
+      }
+
+      if (cleanData) {
+        if (localSuccess) {
+          localSuccess();
+        }
+        this.lastFilter = filter;
+        sucessHandler([], null, true);
+        return;
+      }
+
+      // Make the datasource busy
+      this.busy = true;
+
+      var httpError = function(data, status, headers, config) {
+        this.busy = false;
+        if (!silent) {
+          this.handleError(data);
+        }
+        if (callbacks.error) callbacks.error.call(this, data);
+      }.bind(this);
+
+     let callService = function() {
+        // Get an ajax promise
+        this.$promise = this.getService("GET")({
+          method: "GET",
+          url: this.removeSlash(resourceURL),
+          params: props.params,
+          headers: this.headers,
+          filter: filter
+        }).success(function(data, status, headers, config) {
+          if (localSuccess) {
+            localSuccess();
+          }
+          this.lastFilter = filter;
+          this.busy = false;
+          if (headers) {
+            sucessHandler(data, headers());
+          } else {
+            sucessHandler(data, null);
+          }
+        }.bind(this)).error(function(data, status, headers, config) {
+          httpError(data, status, headers, config);
+        }.bind(this));
+     }.bind(this);
+
+      if (this.fetchOnVisible && !this.parent.is(":visible")) {
+        this.holdServiceCall = callService;
+      } else {
+        this.holdServiceCall = undefined;
+        callService();
+      }
+
+
+    };
+
+    this.getRowsCount = function() {
+      if ( this.rowsCount != -1) {
+        return this.rowsCount;
+      } else {
+        return this.data.length;
+      }
+    }
+
+    /**
+     * Asynchronously notify observers
+     */
+    this.notifyObservers = function() {
+      for (var key in this.observers) {
+        if (this.observers.hasOwnProperty(key)) {
+          var dataset = this.observers[key];
+          $timeout(function() {
+            dataset.notify.call(dataset, this.active);
+          }.bind(this), 1);
+        }
+      }
+    };
+
+    this.notify = function(activeRow) {
+      if (activeRow) {
+        // Parse the filter using regex
+        // to identify {params}
+        var filter = this.watchFilter;
+        var pattern = /\{([A-z][A-z|0-9]*)\}/gim;
+
+        // replace all params found by the
+        // respectiveValues in activeRow
+        filter = filter.replace(pattern, function(a, b) {
+          return activeRow.hasOwnProperty(b) ? activeRow[b] : "";
+        });
+
+        this.fetch({
+          params: {
+            q: filter
+          }
+        });
+      }
+    };
+
+    this.addObserver = function(observer) {
+      this.observers.push(observer);
+    };
+
+    this.sum = function(field) {
+      var total= 0;
+      for (var i=0;i<this.data.length;i++) {
+        if (this.data[i][field]) {
+          total = total + this.data[i][field];
+        }
+      }
+
+      return total;
+    }
+
+    /**
+     * Clone a JSON Object
+     */
+    this.copy = function(from, to, removeEmptyKeys) {
+      if (from === null || Object.prototype.toString.call(from) !== '[object Object]')
+        return from;
+
+      to = to || {};
+
+      for (var key in from) {
+        if (from.hasOwnProperty(key) && key.indexOf('$$') == -1) {
+          to[key] = this.copy(from[key]);
+        }
+      }
+
+      if (removeEmptyKeys) {
+        for (var i = 0; i < this.keys.length; i++) {
+          var key = this.keys[i];
+          var val = to[key];
+          if (val == '' || val == null) {
+            delete to[key]
+          }
+        }
+      }
+      return to;
+    };
+
+    var deepCopyArray = function(from, to) {
+      if (from === null || Object.prototype.toString.call(from) !== '[object Array]')
+        return from;
+
+      to = to || [];
+
+      for (var i=0;i<from.length;i++) {
+        to.push(deepCopy(from[i]));
+      }
+
+      return to;
+    }
+
+    var deepCopy = function(from, to) {
+      if (Object.prototype.toString.call(from) === '[object Array]') {
+        return deepCopyArray(from, to);
+      }
+
+      if (from === null || Object.prototype.toString.call(from) !== '[object Object]') {
+        return from;
+      }
+
+      to = to || {};
+
+      for (var key in from) {
+        if (from.hasOwnProperty(key)) {
+          to[key] = deepCopy(from[key]);
+        }
+      }
+
+      return to;
+    };
+
+    /**
+     * Used to monitore the this datasource data for change (insertion and deletion)
+     */
+    this.startAutoPost = function() {
+      this.unregisterDataWatch = $rootScope.$watch(function() {
+        return this.data;
+      }.bind(this), function(newData, oldData) {
+
+        if (!this.enabled) {
+          this.unregisterDataWatch();
+          return;
+        }
+
+        // Get the difference between both arrays
+        var difSize = newData.length - oldData.length;
+
+        if (difSize > 0) {
+          // If the value is positive
+          // Some item was added
+          for (var i = 1; i <= difSize; i++) {
+            // Make a new request
+            this.insert(newData[newData.length - i], function() {});
+          }
+        } else if (difSize < 0) {
+          // If it is negative
+          // Some item was removed
+          var _self = this;
+          var removedItems = oldData.filter(function(oldItem) {
+            return newData.filter(function(newItem) {
+              return _self.objectIsEquals(oldItem, newItem);
+            }).length == 0;
+          });
+
+          for (var i = 0; i < removedItems.length; i++) {
+            this.remove(removedItems[i], function() {});
+          }
+        }
+      }.bind(this));
+    }
+
+    /**
+     * Unregister the data watcher
+     */
+    this.stopAutoPost = function() {
+      // Unregister any defined watcher on data variable
+      if (this.unregisterDataWatch) {
+        this.unregisterDataWatch();
+        this.unregisterDataWatch = undefined;
+      }
+    }
+
+    this.hasDataBuffered = function() {
+      if (this.dependentBufferLazyPostData && this.dependentBufferLazyPostData.length > 0)
+        return true;
+      else
+        return false;
+    }
+
+    if (window.afterDatasourceCreate) {
+      var args = [$q, $timeout, $rootScope, $window, Notification];
+      window.afterDatasourceCreate.apply(this, args);
+    }
+
+    this.init();
+
+  };
+
+  /**
+   * Dataset Manager Methods
+   */
+  this.storeDataset = function(dataset) {
+    this.datasets[dataset.name] = dataset;
+  },
+
+      /**
+       * Initialize a new dataset
+       */
+      this.initDataset = function(props, scope, $compile, $parse, $interpolate, instanceId, translate) {
+
+        var endpoint = (props.endpoint) ? props.endpoint : "";
+        var dts = new DataSet(props.name, scope, props.fetchOnVisible);
+
+        // Add this instance into the root scope
+        // This will expose the dataset name as a
+        // global variable
+        $rootScope[props.name] = dts;
+        window[props.name] = dts;
+        $rootScope[props.name+".instanceId"] = instanceId;
+
+        var defaultApiVersion = 1;
+
+        dts.entity = props.entity;
+
+
+        if (dts.entity.match(DS_ID)) {
+          dts.entity = "api/cronapi/odata/v2/" +  dts.entity.replaceAll(".", "/");
+        } else {
+          if (dts.isLocalData()) {
+            var path = dts.entity.substring(dts.entity.indexOf("//")+2, dts.entity.length).split("/");
+            dts.localDBType = dts.entity.substring(0, dts.entity.indexOf("://"));
+            dts.localDBName = path[0];
+            dts.localDBStorage = path[1];
+            dts.localDBVersion = path[2]||1;
+          }
+        }
+
+        if (app && app.config && app.config.datasourceApiVersion) {
+          defaultApiVersion = app.config.datasourceApiVersion;
+        }
+
+        dts.translate = translate;
+        dts.apiVersion = props.apiVersion ? parseInt(props.apiVersion) : defaultApiVersion;
+        dts.keys = (props.keys && props.keys.length > 0) ? props.keys.split(",") : [];
+        dts.rowsPerPage = props.rowsPerPage ? props.rowsPerPage : 100; // Default 100 rows per page
+        dts.append = props.append;
+        dts.prepend = props.prepend;
+        dts.endpoint = props.endpoint;
+        dts.filterURL = props.filterURL;
+        dts.autoPost = props.autoPost;
+        dts.autoRefresh = props.autoRefresh;
+        dts.deleteMessage = props.deleteMessage;
+        dts.enabled = props.enabled;
+        dts.offset = (props.offset) ? props.offset : 0; // Default offset is 0
+        dts.onError = props.onError;
+        dts.defaultNotSpecifiedErrorMessage = props.defaultNotSpecifiedErrorMessage;
+        dts.onAfterFill = props.onAfterFill;
+        dts.onBeforeCreate = props.onBeforeCreate;
+        dts.onAfterCreate = props.onAfterCreate;
+        dts.onBeforeUpdate = props.onBeforeUpdate;
+        dts.onAfterUpdate = props.onAfterUpdate;
+        dts.onBeforeDelete = props.onBeforeDelete;
+        dts.onAfterDelete = props.onAfterDelete;
+        dts.onChangeStatus = props.onChangeStatus;
+        dts.onGET = props.onGet,
+        dts.onPOST = props.onPost,
+        dts.onPUT = props.onPut,
+        dts.onDELETE = props.onDelete,
+        dts.dependentBy = props.dependentBy;
+        dts.parameters = props.parameters;
+        dts.parametersNullStrategy = props.parametersNullStrategy;
+        dts.parametersExpression = props.parametersExpression;
+        dts.checkRequired = props.checkRequired;
+        dts.batchPost = props.batchPost;
+        dts.condition = props.condition;
+        dts.conditionExpression = props.conditionExpression;
+        dts.orderBy = props.orderBy;
+        dts.schema = props.schema;
+        dts.startMode = props.startMode;
+        dts.lazy = props.lazy;
+        dts.$compile = $compile;
+        dts.$parse = $parse;
+        dts.$interpolate = $interpolate;
+        dts.loadDataStrategy = props.loadDataStrategy;
+
+        if (props.dependentLazyPost && props.dependentLazyPost.length > 0) {
+          dts.dependentLazyPost = props.dependentLazyPost;
+          eval(dts.dependentLazyPost).addDependentDatasource(dts);
+        }
+
+        dts.dependentLazyPostField = props.dependentLazyPostField; //TRM
+
+        // Check for headers
+        if (props.headers && props.headers.length > 0) {
+          dts.headers = {"X-From-DataSource": "true"};
+          var headers = props.headers.trim().split(";");
+          var header;
+          for (var i = 0; i < headers.length; i++) {
+            header = headers[i].split(":");
+            if (header.length === 2) {
+              dts.headers[header[0]] = header[1];
+            }
+          }
+        }
+
+        this.storeDataset(dts);
+        dts.allowFetch = true;
+
+        if (dts.dependentBy && dts.dependentBy !== "" && dts.dependentBy.trim() !== "") {
+          dts.allowFetch = false;
+
+          //if dependentBy was loaded, the filter in this ds not will be changed and the filter observer not will be called
+          var dependentBy = null;
+          try {
+            dependentBy = JSON.parse(dependentBy);
+          } catch (ex) {
+            dependentBy = eval(dependentBy);
+          }
+
+          if (dependentBy && dependentBy.loadedFinish)
+            dts.allowFetch = true;
+        }
+
+        if (!props.lazy && dts.allowFetch && (Object.prototype.toString.call(props.watch) !== "[object String]") && !props.filterURL) {
+          // Query string object
+          var queryObj = {};
+
+          // Fill the dataset
+          setTimeout(function() {
+            dts.fetch({
+              params: queryObj
+            }, {
+              success: function(data) {
+                if (data && data.length > 0) {
+                  this.active = data[0];
+                  this.cursor = 0;
+                }
+              }
+            });
+          }.bind(this),0);
+        }
+
+        if (props.lazy && props.autoPost) {
+          dts.startAutoPost();
+        }
+
+        if (props.watch && Object.prototype.toString.call(props.watch) === "[object String]") {
+          this.registerObserver(props.watch, dts);
+          dts.watchFilter = props.watchFilter;
+        }
+
+        // Filter the dataset if the filter property was set
+        if (props.filterURL && props.filterURL.length > 0 && dts.allowFetch) {
+          dts.filter(props.filterURL);
+        }
+
+        return dts;
+      };
+
+  /**
+   * Register a dataset as an observer to another one
+   */
+  this.registerObserver = function(targetName, dataset) {
+    this.datasets[targetName].addObserver(dataset);
+  };
+
+  return this;
+}])
+
+/**
+ * Cronus Dataset Directive
+ */
+.directive('datasource', ['DatasetManager', '$timeout', '$parse', 'Notification', '$translate', '$location','$rootScope', '$compile', '$interpolate',
+function(DatasetManager, $timeout, $parse, Notification, $translate, $location, $rootScope, $compile, $interpolate) {
+  return {
+    restrict: 'E',
+    priority: 9999999, //Directives with greater numerical priority are compiled first. Pre-link functions are also run in priority order, but post-link functions are run in reverse order. The order of directives with the same priority is undefined. The default priority is 0
+    scope: true,
+    template: '',
+    link: function(scope, element, attrs) {
+
+      var renameTag = function (targetSelector, scope, newTagString) {
+        $(targetSelector).each(function(){
+          var $this = $(this);
+          var $newElem = $(document.createElement(newTagString), {html: $this.html()});
+
+          $.each(this.attributes, function() {
+            $newElem.attr(this.name, this.value);
+          });
+
+          var events = $this.data('events');
+          if (events) {
+            for (var eventType in events) {
+              for (var idx in events[eventType]) {
+                $newElem[eventType](events[eventType][idx].handler);
+              }
+            }
+          }
+
+          $compile($newElem)(scope);
+          $this.replaceWith($newElem);
+        });
+      };
+
+      renameTag(element, scope, 'cronapp-datasource');
+    }
+  };
+}])
+
+let datasourceRepeat = 1;
+
+app.directive('crnRepeat', function(DatasetManager, $compile, $parse, $injector, $rootScope) {
+  return {
+    restrict: 'A',
+    priority: 9999998,
+    terminal: true,
+    link: function(scope, element, attrs, controllers, transclude) {
+
+      datasourceRepeat++;
+      if (attrs.crnRepeat) {
+        scope.data = DatasetManager.datasets;
+        if (scope.data[attrs.crnRepeat]) {
+          scope['datasourceRepeat' + datasourceRepeat] = scope.data[attrs.crnRepeat];
+        } else {
+          scope['datasourceRepeat' + datasourceRepeat] = {};
+          scope['datasourceRepeat' + datasourceRepeat].data = $parse(attrs.crnRepeat)(scope);
+        }
+        element.attr('ng-repeat', 'rowData in datasourceRepeat' + datasourceRepeat + '.data');
+
+      }
+
+      var tagName = element[0].tagName;
+      $compile(element, null, 9999998)(scope);
+      scope.$watchCollection('datasourceRepeat' + datasourceRepeat + '.data', function (newVal, oldVal) {
+        if (tagName.toLowerCase() == "ion-slide") {
+          var $ionicSlideBoxDelegate = $injector.get('$ionicSlideBoxDelegate');
+          $ionicSlideBoxDelegate.update();
+        }
+      });
+    }
+  };
+})
+
+.directive('crnDatasource', ['DatasetManager', '$parse', '$rootScope', function(DatasetManager, $parse, $rootScope) {
+  return {
+    restrict: 'A',
+    scope: true,
+    priority: 9999998,
+    link: function(scope, element, attrs) {
+      scope.data = DatasetManager.datasets;
+      if (scope.data[attrs.crnDatasource]) {
+        scope.datasource = scope.data[attrs.crnDatasource];
+      } else {
+        scope.datasource = {};
+        scope.datasource.data = $parse(attrs.crnDatasource)(scope);
+      }
+    }
+  };
+}])
+
+/**
+ * Cronapp Datasource Directive
+ */
+.directive('cronappDatasource', ['DatasetManager', '$timeout', '$parse', 'Notification', '$translate', '$location','$rootScope', '$compile', '$interpolate',
+  function(DatasetManager, $timeout, $parse, Notification, $translate, $location, $rootScope, $compile, $interpolate) {
+  return {
+    restrict: 'E',
+    scope: true,
+    template: '',
+    link: function(scope, element, attrs) {
+      initDatasource(scope, element, attrs, DatasetManager, $timeout, $parse, Notification, $translate, $location, $rootScope, $compile, $interpolate);
+    }
+  };
+}])
