@@ -4319,7 +4319,11 @@ angular.module('datasourcejs', [])
               this.conditionOdata = this.parserCondition(obj, this.parametersNullStrategy, resultData);
             }
 
-            var filterCount = this.conditionExpression.match(/{{(?!null).*?}}/g).length;
+            var filterCount = 0;
+            let resultMatchExpression = this.conditionExpression.match(/{{(?!null).*?}}/g);
+            if (resultMatchExpression) {
+              filterCount = resultMatchExpression.length;
+            }
 
             if (!cleanData && resultData.clean) {
               cleanData = true;
