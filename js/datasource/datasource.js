@@ -2930,7 +2930,12 @@ angular.module('datasourcejs', [])
         var key = keys[i];
         var rowKey = null;
         try {
-          rowKey = eval("rowData."+key);
+          if (Array.isArray(rowData)) {
+            rowKey = eval("rowData[0]."+key);
+          }
+          else {
+            rowKey = eval("rowData."+key);
+          }
         } catch(e){
           //
         }
@@ -3140,6 +3145,16 @@ angular.module('datasourcejs', [])
       var cursor = null;
       var copyObj = null;
 
+      let tryByDataKey = (i) => {
+        var item = this.data[i];
+        for (var key in dataKeys) {
+          if (rowId.hasOwnProperty(key) && rowId[key] === item[key])
+            found = true;
+          else
+            found = false;
+        }
+        return found;
+      };
 
       if (typeof rowId === 'object' && rowId !== null) {
         var dataKeys;
@@ -3149,14 +3164,11 @@ angular.module('datasourcejs', [])
         for (var i = 0; i < this.data.length; i++) {
           if (rowId.__$id && this.data[i].__$id) {
             found = rowId.__$id == this.data[i].__$id;
-          } else {
-            var item = this.data[i];
-            for (var key in dataKeys) {
-              if (rowId.hasOwnProperty(key) && rowId[key] === item[key])
-                found = true;
-              else
-                found = false;
+            if (!found) {
+              found = tryByDataKey(i);
             }
+          } else {
+            found = tryByDataKey(i);
           }
           if (found) {
             cursor = i;
