@@ -1,7 +1,8 @@
 (function() {
 
-  var ISO_PATTERN  = new RegExp("^(\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d\\.\\d+([+-][0-2]\\d:[0-5]\\d|Z))|(\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d([+-][0-2]\\d:[0-5]\\d|Z))|(\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d([+-][0-2]\\d:[0-5]\\d|Z))$");
+  var ISO_PATTERN  = new RegExp("^(\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d\\.\\d+([+-][0-2]\\d:[0-5]\\d|Z))|(\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d([+-][0-2]\\d:[0-5]\\d|Z)?)|(\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d([+-][0-2]\\d:[0-5]\\d|Z))$");
   var TIME_PATTERN  = new RegExp("^PT(?:(\\d\\d?)H)?(?:(\\d\\d?)M)?(?:(\\d\\d?)(?:\\.(\\d\\d?\\d?)?)?S)?$");
+  var NUMBER_STR_PATTERN  = new RegExp("\\d+");
 
   window.stringToJs = function(value) {
     var formated = "";
@@ -42,12 +43,26 @@
     return "'"+o+"'";
   }
 
-  window.oDataToObj = function(value, unquote) {
+  window.objectsAreEqual = function(v1, v2) {
+    v1 = oDataToObj(v1);
+    v2 = oDataToObj(v2);
+
+    if (v1 instanceof Date && v2 instanceof Date) {
+      return v1.getTime() == v2.getTime();
+    }
+
+    return v1 == v2;
+  }
+
+  window.oDataToObj = function(value, unquote, type) {
     if (unquote == null || unquote == undefined) {
       unquote = true;
     }
 
     if (typeof value == 'string') {
+      if (type && type == 'String') {
+        return value;
+      }
       if (value.length >= 10 && value.match(ISO_PATTERN) && value.length < 100) {
         return new Date(value);
       }
@@ -71,10 +86,16 @@
       }
       else if (value.length >= 20 && value.substring(0, 9) == "datetime'" && value.substring(value.length - 1, value.length) == "'") {
         var r = value.substring(9, value.length-1);
+        if (r.match(NUMBER_STR_PATTERN)) {
+          return new Date(parseInt(r));
+        }
         return new Date(r);
       }
       else if (value.length >= 20 && value.substring(0, 15) == "datetimeoffset'" && value.substring(value.length - 1, value.length) == "'") {
         var r = value.substring(15, value.length-1);
+        if (r.match(NUMBER_STR_PATTERN)) {
+          return new Date(parseInt(r));
+        }
         return new Date(r);
       }
       else if (unquote) {
@@ -92,6 +113,9 @@
         }
 
         else if (value != '') {
+          if (type && type == 'Date') {
+            return new Date(type);
+          }
           return parseFloat(value);
         }
       }
