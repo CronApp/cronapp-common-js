@@ -29,7 +29,10 @@
     return formated;
   }
 
-  window.objToOData = function(o) {
+  window.objToOData = function(o, escape) {
+    if (escape == undefined || escape == null) {
+      escape = true;
+    }
     if (o == null || o == undefined) {
       return "null";
     }
@@ -40,12 +43,15 @@
       return "datetimeoffset'"+o.toISOString()+"'";
     }
 
-    return "'"+o+"'";
+    if (typeof o == 'string' && escape) {
+      return "'" + o.replaceAll("'", "''") + "'";
+    }
+    return "'" + o + "'";
   }
 
-  window.objectsAreEqual = function(v1, v2) {
-    v1 = oDataToObj(v1);
-    v2 = oDataToObj(v2);
+  window.objectsAreEqual = function(v1, v2, type) {
+    v1 = oDataToObj(v1, undefined, type);
+    v2 = oDataToObj(v2, undefined, type);
 
     if (v1 instanceof Date && v2 instanceof Date) {
       return v1.getTime() == v2.getTime();
@@ -98,26 +104,22 @@
         }
         return new Date(r);
       }
-      else if (unquote) {
-        if (value.length >= 2 && ((value.charAt(0) == "'" && value.charAt(value.length-1) == "'") || (value.charAt(0) == "\"" && value.charAt(value.length-1) == "\"")) ) {
+
+      else if (value.length >= 2 && ((value.charAt(0) == "'" && value.charAt(value.length-1) == "'") || (value.charAt(0) == "\"" && value.charAt(value.length-1) == "\"")) ) {
           var r = value.substring(1, value.length-1);
           return r;
         }
 
-        else if (value == 'true' || value == 'false') {
-          return (value == 'true')
-        }
+      else if (value == 'true' || value == 'false') {
+        return (value == 'true')
+      }
 
-        else if (value == 'null') {
-          return null;
-        }
+      else if (value == 'null') {
+        return null;
+      }
 
-        else if (value != '') {
-          if (type && type == 'Date') {
-            return new Date(type);
-          }
-          return parseFloat(value);
-        }
+      else if (!isNaN(value) && !isNaN(parseFloat(value))) {
+        return parseFloat(value);
       }
     }
 
