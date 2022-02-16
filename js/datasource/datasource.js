@@ -1768,9 +1768,12 @@ angular.module('datasourcejs', [])
       return -1;
     }
 
-    this.getObjectAsString = function(o) {
+    this.getObjectAsString = function(o, escape) {
+      if (escape == undefined || escape == null) {
+        escape = true;
+      }
       if (this.isOData()) {
-        return window.objToOData(o);
+        return window.objToOData(o, escape);
       } else {
         if (o == null) {
           return "";
@@ -4286,7 +4289,7 @@ angular.module('datasourcejs', [])
                   cleanData = true;
                 }
               } else {
-                filterClause = this.getObjectAsString(this.normalizeValue(binary[1], true));
+                filterClause = this.getObjectAsString(this.normalizeValue(binary[1], true), false);
               }
             }
 
