@@ -1770,9 +1770,12 @@ angular.module('datasourcejs', [])
       return -1;
     }
 
-    this.getObjectAsString = function(o) {
+    this.getObjectAsString = function(o, escape) {
+      if (escape == undefined || escape == null) {
+        escape = true;
+      }
       if (this.isOData()) {
-        return window.objToOData(o);
+        return window.objToOData(o, escape);
       } else {
         if (o == null) {
           return "";
@@ -2507,8 +2510,8 @@ angular.module('datasourcejs', [])
       this.keys = useKeys || this.keys;
 
       this.filterValues = function(elem) {
-        for (let i=0;i<this.keys.length;i++) { 
-          if (this.keyObj[i] == elem[this.keys[i]]) {
+        for (let i=0;i<this.keys.length;i++) {
+          if (objectsAreEqual(this.keyObj[i], elem[this.keys[i]])) {
             return elem;
           }
         }
@@ -2936,7 +2939,7 @@ angular.module('datasourcejs', [])
             rowKey = eval("rowData[0]."+key);
           }
           else {
-            rowKey = eval("rowData."+key);
+          rowKey = eval("rowData."+key);
           }
         } catch(e){
           //
@@ -3399,11 +3402,11 @@ angular.module('datasourcejs', [])
       return this.entity.indexOf('local://') == 0;
     }
 
-    this.normalizeValue = function(value, unquote) {
+    this.normalizeValue = function(value, unquote, type) {
       if (unquote == null || unquote == undefined) {
         unquote = false;
       }
-      return window.oDataToObj(value, unquote);
+      return window.oDataToObj(value, unquote, type);
     }
 
     this.normalizeObject = function(data) {
@@ -3416,7 +3419,8 @@ angular.module('datasourcejs', [])
             }
 
             else {
-              data[key] = this.normalizeValue(d);
+              let type = this.getFieldFromSchema(key);
+              data[key] = this.normalizeValue(d, undefined, type);
             }
 
           }
@@ -4287,7 +4291,7 @@ angular.module('datasourcejs', [])
                   cleanData = true;
                 }
               } else {
-                filterClause = this.getObjectAsString(this.normalizeValue(binary[1], true));
+                filterClause = this.getObjectAsString(this.normalizeValue(binary[1], true), false);
               }
             }
 
