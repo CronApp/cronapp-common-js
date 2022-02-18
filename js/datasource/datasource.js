@@ -1865,7 +1865,7 @@ angular.module('datasourcejs', [])
         return false;
       }
       if (this.checkRequired) {
-        return $('input[ng-model*="' + this.name + '."]:invalid').not('input[type=checkbox]').not('.ng-empty').length > 0;
+        return $('input[ng-model*="' + this.name + '."]:invalid').not('.ng-empty').length > 0;
       } else {
         return false;
       }
@@ -2240,40 +2240,6 @@ angular.module('datasourcejs', [])
       }
     }
 
-    this.getDeletionURL = function(obj, forceOriginalKeys) {
-      var keyObj = this.getKeyValues(obj.__original?obj.__original:obj, forceOriginalKeys);
-
-      var suffixPath = "";
-      if (this.isOData()) {
-        suffixPath = "(";
-      }
-      var count = 0;
-      for (var key in keyObj) {
-        if (keyObj.hasOwnProperty(key)) {
-          if (this.isOData()) {
-            if (count > 0) {
-              suffixPath += ",";
-            }
-            suffixPath += key + "=" + this.getObjectAsString(keyObj[key]);
-          } else {
-            suffixPath += "/" + keyObj[key];
-          }
-          count++;
-        }
-      }
-      if (this.isOData()) {
-        suffixPath += ")";
-      }
-
-      var url = this.entity;
-
-      if (this.entity.endsWith('/')) {
-        url = url.substring(0, url.length-1);
-      }
-
-      return url + suffixPath;
-    };
-
     this.notifyPendingChanges = function(value) {
       console.log("notifyPendingChanges : " + value);
       if (this.events.pendingchanges) {
@@ -2346,6 +2312,7 @@ angular.module('datasourcejs', [])
       }
       if (this.isOData()) {
         suffixPath += ")";
+        suffixPath = encodeURI(suffixPath);
       }
 
       var url = this.entity;
@@ -2382,6 +2349,7 @@ angular.module('datasourcejs', [])
       }
       if (this.isOData()) {
         suffixPath += ")";
+        suffixPath = encodeURI(suffixPath);
       }
 
       var url = this.entity;
@@ -3839,7 +3807,15 @@ angular.module('datasourcejs', [])
           result = right;
         }
         else {
-          result = eval(right);
+          if (right && typeof right == 'string' && right.length >= 2 && ((right.charAt(0) == "'" && right.charAt(right.length-1) == "'") || (right.charAt(0) == "\"" && right.charAt(right.length-1) == "\"")) ) {
+            try {
+              result = eval("'" + right.substring(1, right.length - 1).replaceAll("'", "\\'") + "'");
+            } catch (e) {
+              result = eval(right);
+            }
+          } else {
+            result = eval(right);
+          }
           if (result instanceof Date) {
             result = "datetimeoffset'" + result.toISOString() + "'";
           }
